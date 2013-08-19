@@ -3,11 +3,12 @@
 
 module dropboxlike
 {
-    //Bind a specific user to the device is using
+    //Bind a specific user to the device is using. It is used to allow multiple login from the same user
     struct Device{
         string username;
         string dev_id;
     };
+    //This struct represents the logged devices indeed all the users logged with the session token
     struct Logged {
         Device dev;
         string token;
@@ -20,9 +21,11 @@ module dropboxlike
         string username;
         string password;
     };
-    
+    //This Exception is used when the username to be registered is already taken by someone else
     exception AlreadySubscribed { };
+    //This Exception is used when either the username or password or both don't match an already registered user
     exception InvalidUser{ };
+    //This Exception is used when the user is not logged to the system
     exception UserNoLogged { };
     
     //It describes the login/logout/subscribe module
@@ -33,18 +36,40 @@ module dropboxlike
         boolean logout (in string username, in string device) raises (UserNoLogged);
         readonly attribute Logged logged;
     };
-    
-    //I 
+    //Content is a sequence of octet that are the content of the file that has to be sent
+    typedef sequence<octet> Content;
+    //It represents a file inside the repository (local or remote) 
     struct FileAtRepository { 
         string  name;
         string  md5;
         string  ownerUserName;
+        Content cont;
     };
     
+    //ErrorFileSending is throwed when the md5 computed doesn't match the original md5
     exception ErrorFileSending { };
-    
+    //OwnerException is used to notify problem of ownership
+    exception OwnerException { };
+    //FileDoesntExist raises when the filename passed as parameter is not in the list of the repository
+    exception FileDoesntExist { };
+    //TokenException is the exception when is used a token either no more valid or not valide at all (tampering)
+    exception TokenException { };
+    typedef sequence<FileAtRepository> FileList;
+    //SmallL is the struct representing the single element of the SmallList
+    struct SmallL { 
+        string name;
+        string md5;
+    };
+    //SmallList is a list of file information without the content of the file
+    typedef sequence<SmallL> SmallList;
+
     interface Repository {
-        boolean send(in FileAtRepository file) raises (ErrorFileSending);
-        boolean ask_list_user (in string file_md5);
+        //send a file to the repository of the user logged
+        boolean send(in FileAtRepository file,in string username, in string token) raises (ErrorFileSending,TokenException);
+        //ask the list of file for the user logged
+        FileList askListUser (in string username, in string token) raises (OwnerException,FileDoesntExist, TokenException);
+        //delete a specific file given the name 
+        boolean delete(in string filename,in string username, in string token) raises (OwnerException,TokenException, FileDoesntExist);
+        readonly attribute FileList fileList;
     };
 };
