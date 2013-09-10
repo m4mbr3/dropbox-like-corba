@@ -1,8 +1,6 @@
 // dropbox-like.idl
 // IDL definition of a distributed file repository
-
-module dropboxlike
-{
+module Dropboxlike {
     //Bind a specific user to the device is using. It is used to allow multiple login from the same user
     struct Device{
         string username;
@@ -30,9 +28,9 @@ module dropboxlike
     
     //It describes the login/logout/subscribe module
     interface UserManager {
-        boolean isLogged(in string username);
+        boolean isLogged(in string username, in string token);
         boolean subscribe(in string name, in string surname, in string username, in string password) raises (AlreadySubscribed);
-        boolean login(in string username, in string password, in string dev_id) raises (InvalidUser);
+        string login(in string username, in string password, in string dev_id) raises (InvalidUser);
         boolean logout (in string username, in string device) raises (UserNoLogged);
         readonly attribute Logged logged;
     };

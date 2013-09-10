@@ -1,23 +1,32 @@
 package src;
 
-import dropboxlike.FileAtRepository;
-import dropboxlike.*;
-import dropboxlike.RepositoryPOA;
 import java.util.*;
+import Dropboxlike.*;
 import org.omg.CORBA.*;
 
-public class DropboxLikeImpl extends RepositoryPOA{
+public class DropboxLikeImpl extends RepositoryPOA {
+    private ArrayList<FileAtRepository> repository;
+    UserManagerImpl um;
     DropboxLikeImpl() {
-
+        repository =  new ArrayList<FileAtRepository>();
+        um = new UserManagerImpl();
     }
-    boolean send(FileAtRepository file, String username, String token ) {
-
+    public boolean send(FileAtRepository file, String username, String token ) {
+        //if( um.islogged(username))
+        return false;
     }
-    FileList askListUser (String username, String token) {
-
+    public FileAtRepository[] askListUser (String username, String token) {
+        //TODO complete this function
+        FileAtRepository[] repo = null;
+        return repo;
     }
-    boolean delete (String filename, String username, String token) {
-
+    public boolean delete (String filename, String username, String token) {
+        //TODO complete this function
+        return false;
     }
-    FileList fileList;
+    public FileAtRepository[] fileList(){
+        //TODO complete this function
+        FileAtRepository[] repo = null;
+        return repo;
+    }
 }
