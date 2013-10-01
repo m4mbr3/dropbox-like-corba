@@ -65,4 +65,26 @@ public class UserManagerImpl extends UserManagerPOA {
         }
         return false;
     }
+    public boolean remove (String username, String password) {
+        for (UserInfo el : users) {
+            try {
+                MessageDigest md = MessageDigest.getInstance("SHA");
+                byte[] password_bytes = password.getBytes();
+                md.update(password_bytes);
+                if(el.username.equals(username) && el.password.equals(md.digest().toString())) {
+                    users.remove(el);
+                    for (Logged e: logged_user) {
+                        if (e.dev.username.equals(username)){
+                            logged_user.remove(e);
+                        }
+                    }
+                    return true;
+                }
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
+    }
 }
