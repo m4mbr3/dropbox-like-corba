@@ -33,10 +33,16 @@ public class DropboxLikeImpl extends RepositoryPOA {
         }
         return false;
     }
-    public FileAtRepository[] askListUser (String username, String token) {
+    public SmallL[] askListUser (String username, String token) {
         //TODO complete this function
-        FileAtRepository[] repo = null;
-        return repo;
+        ArrayList<SmallL> list = new ArrayList<SmallL>();
+        for (FileAtRepository f : repository) {
+            if (f.ownerUserName.equals(username)) {
+                list.add(new SmallL(f.name, f.md5));
+            }
+        }
+        SmallL[] smallL = list.toArray(new SmallL[list.size()]);
+        return smallL;
     }
     public boolean delete (String filename, String username, String token) {
         //TODO complete this function
