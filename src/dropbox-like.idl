@@ -69,5 +69,7 @@ module Dropboxlike {
         SmallList askListUser (in string username, in string token) raises (OwnerException,FileDoesntExist, TokenException);
         //delete a specific file given the name 
         boolean delete(in string filename,in string username, in string token) raises (OwnerException,TokenException, FileDoesntExist);
+        string login(in string username, in string password, in string dev_id );
+        boolean subscribe (in string name,in string surname, in string username, in string password);
     };
 };

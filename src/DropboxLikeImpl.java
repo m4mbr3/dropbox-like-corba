@@ -4,15 +4,26 @@ import java.util.*;
 import java.io.*;
 import Dropboxlike.*;
 import org.omg.CORBA.*;
+import org.omg.PortableServer.*;
+import org.omg.CosNaming.*;
+import org.omg.CosNaming.*;
+import org.omg.CosNaming.NamingContextPackage.*;
+import org.omg.CORBA.*;
+import org.omg.PortableServer.*;
+import org.omg.PortableServer.POA;
 
 public class DropboxLikeImpl extends RepositoryPOA {
     private ArrayList<FileAtRepository> repository;
 
     private UserManagerImpl um;
 
+    private ORB orb;
     DropboxLikeImpl() {
         repository =  new ArrayList<FileAtRepository>();
         um = new UserManagerImpl();
+    }
+    public void setORB(ORB orb_val) {
+        orb = orb_val;
     }
     public boolean send(FileAtRepository file, String username, String token ) {
         if(um.isLogged(username,token))
@@ -43,6 +54,13 @@ public class DropboxLikeImpl extends RepositoryPOA {
         SmallL[] smallL = list.toArray(new SmallL[list.size()]);
         return smallL;
     }
+    public boolean subscribe(String name,String surname, String username, String password) {
+        return um.subscribe(name,surname,username, password);
+    }
+    public String login (String username, String password, String dev_id) {
+        System.out.println("I'm here" + username + " " + password + " " + dev_id);
+        return um.login(username, password,dev_id);
+    }
     public boolean delete (String filename, String username, String token) {
         if (um.isLogged(username, token)) {
             for (FileAtRepository f : repository) {
@@ -67,4 +85,8 @@ public class DropboxLikeImpl extends RepositoryPOA {
         }
         return false;
     }
+    public void shutdown() {
+            orb.shutdown(false);
+            }
 }
+

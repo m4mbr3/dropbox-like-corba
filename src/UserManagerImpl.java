@@ -13,6 +13,24 @@ public class UserManagerImpl extends UserManagerPOA {
         logged_user = new ArrayList<Logged>();
         users = new ArrayList<UserInfo>();
     }
+    public String SHAchecksumpassword(String password){
+        StringBuffer sb = new StringBuffer();
+        try{
+            MessageDigest md = MessageDigest.getInstance("SHA-512");
+            byte[] dataBytes = new byte[password.length()];
+            dataBytes = password.getBytes();
+            md.update(dataBytes, 0, password.length());
+            byte[] mdbytes = md.digest();
+            for (int i = 0; i < mdbytes.length; i++) {
+                sb.append(Integer.toString((mdbytes[i] & 0xff) + 0x100, 16).substring(1));
+            }
+        }
+        catch(Exception e) {
+            e.printStackTrace();
+        }
+        return sb.toString();
+    }
+
     public boolean isLogged(String username, String token) {
         for (Logged el : logged_user) {
             if (el.dev.username.equals(username) && el.token.equals(token)) {
@@ -27,34 +45,20 @@ public class UserManagerImpl extends UserManagerPOA {
                 return false;
             }
         }
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA");
-            byte[] password_bytes = password.getBytes();
-            md.update(password_bytes);
-            users.add(new UserInfo(name, surname, username, md.digest().toString()  ));
-        }
-        catch (Exception cnse) {
-            cnse.printStackTrace();
-        }
+        UserInfo element = new UserInfo(name,surname, username, SHAchecksumpassword(password));
+        users.add(element);
         return true;
     }
     public String login(String username, String password, String dev_id) {
         for (UserInfo el : users) {
-            try {
-                MessageDigest md = MessageDigest.getInstance("SHA");
-                byte[] password_bytes = password.getBytes();
-                md.update(password_bytes);
-                if(el.username.equals(username) && el.password.equals(md.digest().toString())) {
-                    md.update(new Integer(new Random().nextInt()).toString().getBytes());
-                    logged_user.add(new Logged(new Device(username, dev_id), md.digest().toString()));
-                    return md.digest().toString();
+                System.out.println(el.password+"\n"+SHAchecksumpassword(password));
+                if(el.username.compareTo(username) == 0 && el.password.compareTo(SHAchecksumpassword(password)) == 0) {
+                    String sha = SHAchecksumpassword(new Integer(new Random().nextInt()).toString());
+                    logged_user.add(new Logged(new Device(username, dev_id),sha));
+                    return sha.toString();
                 }
-            }
-            catch (Exception e) {
-                e.printStackTrace();
-            }
         }
-        return null;
+        return new String("NULL");
     }
     public boolean logout(String username, String device) {
         for (Logged el : logged_user) {
