@@ -34,7 +34,6 @@ public class DropboxLikeImpl extends RepositoryPOA {
         return false;
     }
     public SmallL[] askListUser (String username, String token) {
-        //TODO complete this function
         ArrayList<SmallL> list = new ArrayList<SmallL>();
         for (FileAtRepository f : repository) {
             if (f.ownerUserName.equals(username)) {
@@ -45,9 +44,27 @@ public class DropboxLikeImpl extends RepositoryPOA {
         return smallL;
     }
     public boolean delete (String filename, String username, String token) {
-        //TODO complete this function
-
-
+        if (um.isLogged(username, token)) {
+            for (FileAtRepository f : repository) {
+                if (f.ownerUserName.equals(username) && f.name.equals(filename)) {
+                    try{
+                        File file = new File(username+"/"+f.name);
+                        if (file.delete())
+                            System.out.println("File Deleted");
+                        else
+                            System.out.println("File Delation Fail");
+                        file = new File(username+"/"+f.name+".info");
+                        if (file.delete())
+                            System.out.println("File Deleted");
+                        else
+                            System.out.println("File Delation Fail");
+                    }
+                    catch (Exception e ) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
         return false;
     }
 }
