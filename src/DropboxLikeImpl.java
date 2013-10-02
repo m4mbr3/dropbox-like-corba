@@ -61,6 +61,9 @@ public class DropboxLikeImpl extends RepositoryPOA {
         System.out.println("I'm here" + username + " " + password + " " + dev_id);
         return um.login(username, password,dev_id);
     }
+    public boolean logout(String username, String dev_id) {
+        return um.logout(username, dev_id);
+    }
     public boolean delete (String filename, String username, String token) {
         if (um.isLogged(username, token)) {
             for (FileAtRepository f : repository) {

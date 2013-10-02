@@ -40,8 +40,8 @@ public class UserManagerImpl extends UserManagerPOA {
         return false;
     }
     public boolean subscribe(String name, String surname, String username, String password) {
-        for(Logged el : logged_user) {
-            if(el.dev.username.equals(username)){
+        for(UserInfo el : users) {
+            if(el.username.compareTo(username) == 0){
                 return false;
             }
         }
@@ -51,14 +51,19 @@ public class UserManagerImpl extends UserManagerPOA {
     }
     public String login(String username, String password, String dev_id) {
         for (UserInfo el : users) {
-                System.out.println(el.password+"\n"+SHAchecksumpassword(password));
-                if(el.username.compareTo(username) == 0 && el.password.compareTo(SHAchecksumpassword(password)) == 0) {
-                    String sha = SHAchecksumpassword(new Integer(new Random().nextInt()).toString());
-                    logged_user.add(new Logged(new Device(username, dev_id),sha));
-                    return sha.toString();
+            System.out.println(el.password+"\n"+SHAchecksumpassword(password));
+            if(el.username.compareTo(username) == 0 && el.password.compareTo(SHAchecksumpassword(password)) == 0) {
+                for (Logged log : logged_user) {
+                    if(log.dev.dev_id.compareTo(dev_id) == 0 && log.dev.username.compareTo(username) == 0) {
+                        return "ALREADY_LOGGED";
+                    }
                 }
+                String sha = SHAchecksumpassword(new Integer(new Random().nextInt()).toString());
+                logged_user.add(new Logged(new Device(username, dev_id),sha));
+                return sha.toString();
+            }
         }
-        return new String("NULL");
+        return "ERROR_NO_USER";
     }
     public boolean logout(String username, String device) {
         for (Logged el : logged_user) {
