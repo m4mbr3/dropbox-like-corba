@@ -72,5 +72,7 @@ module Dropboxlike {
         string login(in string username, in string password, in string dev_id );
         boolean subscribe (in string name,in string surname, in string username, in string password);
         boolean logout(in string username, in string dev_id);
+        boolean remove(in string username, in string password);
+
     };
 };

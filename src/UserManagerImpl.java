@@ -63,7 +63,7 @@ public class UserManagerImpl extends UserManagerPOA {
                 return sha.toString();
             }
         }
-        return "ERROR_NO_USER";
+        return "INVALID_USER";
     }
     public boolean logout(String username, String device) {
         for (Logged el : logged_user) {
@@ -76,24 +76,20 @@ public class UserManagerImpl extends UserManagerPOA {
     }
     public boolean remove (String username, String password) {
         for (UserInfo el : users) {
-            try {
-                MessageDigest md = MessageDigest.getInstance("SHA");
-                byte[] password_bytes = password.getBytes();
-                md.update(password_bytes);
-                if(el.username.equals(username) && el.password.equals(md.digest().toString())) {
-                    users.remove(el);
-                    for (Logged e: logged_user) {
-                        if (e.dev.username.equals(username)){
-                            logged_user.remove(e);
+                if(el.username.compareTo(username) == 0 && el.password.compareTo(SHAchecksumpassword(password)) == 0) {
+                   users.remove(el);
+                    ArrayList<Logged> my_ele = new ArrayList<Logged>();
+                    for (Logged e : logged_user) {
+                        if (e.dev.username.compareTo(username) == 0){
+                            my_ele.add(e);
                         }
+                    }
+                    for (Logged e : my_ele) {
+                        logged_user.remove(e);
                     }
                     return true;
                 }
             }
-            catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
         return false;
     }
 }

@@ -4,6 +4,7 @@ import org.omg.CORBA.*;
 import org.omg.PortableServer.*;
 import org.omg.CosNaming.*;
 import Dropboxlike.*;
+import java.io.*;
 
 public class DropboxLikeServer {
     public static void main(String[] args) {
@@ -17,6 +18,12 @@ public class DropboxLikeServer {
 
             // create servant and register it with the ORB
             DropboxLikeImpl dropbox = new DropboxLikeImpl();
+            String home_env = System.getenv("DROPBOXLIKE_HOME");
+            if (home_env != null)
+                dropbox.set_home(home_env +"/dropboxlike");
+            System.out.println("THE HOME IS : "+dropbox.get_home());
+            File home_dir = new File(dropbox.get_home());
+            home_dir.mkdirs();
             dropbox.setORB(orb);
             // get object reference from the servant
             org.omg.CORBA.Object ref = rootpoa.servant_to_reference(dropbox);
