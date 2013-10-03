@@ -74,22 +74,31 @@ public class UserManagerImpl extends UserManagerPOA {
         }
         return false;
     }
+    public boolean check_username(String username) {
+        for (UserInfo s : users) {
+            if (s.username.compareTo(username) == 0) {
+                return false;
+            }
+        }
+        return true;
+    }
     public boolean remove (String username, String password) {
         for (UserInfo el : users) {
-                if(el.username.compareTo(username) == 0 && el.password.compareTo(SHAchecksumpassword(password)) == 0) {
-                   users.remove(el);
-                    ArrayList<Logged> my_ele = new ArrayList<Logged>();
-                    for (Logged e : logged_user) {
-                        if (e.dev.username.compareTo(username) == 0){
-                            my_ele.add(e);
-                        }
+            if(el.username.compareTo(username) == 0 && el.password.compareTo(SHAchecksumpassword(password)) == 0) {
+                users.remove(el);
+                ArrayList<Logged> my_ele = new ArrayList<Logged>();
+                for (Logged e : logged_user) {
+                    if (e.dev.username.compareTo(username) == 0){
+                        my_ele.add(e);
                     }
-                    for (Logged e : my_ele) {
-                        logged_user.remove(e);
-                    }
-                    return true;
                 }
+                for (Logged e : my_ele) {
+                    logged_user.remove(e);
+                }
+                return true;
             }
+        }
+        System.out.println("ERRORE remove");
         return false;
     }
 }

@@ -152,6 +152,9 @@ public class DropboxLikeImpl extends RepositoryPOA {
         return false;
     }
 
+    public boolean check_username(String username) {
+        return um.check_username(username);
+    }
     public void shutdown() {
             orb.shutdown(false);
             }

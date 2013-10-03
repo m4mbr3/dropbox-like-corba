@@ -35,6 +35,86 @@ public class DropboxLikeClient {
         }
         return hexString.toString();
     }
+    public static void menu() {
+        System.out.println ("/*************************  DropboxLike   ***************************/");
+        System.out.println ("/***********  Author : Andrea Mambretti   Version 1.0   *************/ ");
+        System.out.println ("/********************************************************************/ ");
+        System.out.println ("Select an operation:");
+        System.out.println ("");
+        System.out.println ("    1) Subscribe an account ");
+        System.out.println ("    2) Remove account");
+        System.out.println ("    3) Login");
+        System.out.println ("    4) Logout");
+        System.out.println ("    5) Send file");
+        System.out.println ("    6) Remove file");
+        System.out.println ("    7) Exit");
+        System.out.println ("");
+        System.out.print ("dropboxlike > ");
+    }
+
+    public static void subscribe() {
+        Console c  = System.console();
+        String name;
+        String surname;
+        String username;
+        String password = new String();
+        name = c.readLine("Insert your name: ");
+        surname = c.readLine("Insert your surname: ");
+        boolean first = true;
+        do {
+            if (first) {
+                username = c.readLine("Insert your username: ");
+                first = false;
+            }
+            else
+                username = c.readLine("Username not available. Try again: ");
+        }while (!dropboxImpl.check_username(username));
+        boolean noMatch;
+        do {
+            char [] newPassword1 = c.readPassword("Enter your new password: ");
+            char [] newPassword2 = c.readPassword("Enter new password again: ");
+            noMatch = ! Arrays.equals(newPassword1, newPassword2);
+            if (noMatch) {
+                c.format("Passwords don't match. Try again.%n ");
+            } else {
+                password = new String(newPassword1);
+            }
+            Arrays.fill(newPassword1, ' ');
+            Arrays.fill(newPassword2, ' ');
+        } while (noMatch);
+        dropboxImpl.subscribe(name,surname, username, password);
+    }
+
+    public static void remove_account() {
+        Console c = System.console();
+        String username;
+        String password;
+        boolean first = true;
+        do {
+            if (!first)
+                 System.out.println("Error: maybe the user or/and the password are wrong ");
+            username = c.readLine("Insert your username: ");
+            char[] password_ = c.readPassword("Insert the password for " + username + ": ");
+            password = new String(password_);
+            first = true;
+
+        }while(!dropboxImpl.remove(username, password));
+    }
+    public static void login() {
+
+    }
+
+    public static void logout() {
+
+    }
+
+    public static void send_file() {
+
+    }
+
+    public static void remove_file() {
+
+    }
 
     public static void main(String[] args) {
         try{
@@ -45,7 +125,38 @@ public class DropboxLikeClient {
             NamingContextExt ncRef = NamingContextExtHelper.narrow(objRef);
             String name = "DBServer";
             dropboxImpl = RepositoryHelper.narrow(ncRef.resolve_str(name));
-            char c='r';
+            Console con = System.console();
+            Scanner read = new Scanner(con.reader());
+            int c=0;
+            while (c != 7) {
+                do {
+                    menu();
+                    c = read.nextInt();
+                } while(c < 0 || c > 8);
+                if (c == 1) {
+                    subscribe();
+                }
+                else if (c == 2) {
+                    remove_account();
+                }
+                else if (c == 3) {
+                    login();
+                }
+                else if (c == 4) {
+                    logout();
+                }
+                else if (c == 5) {
+                    send_file();
+                }
+                else if (c == 6) {
+                    remove_file();
+                }
+            }
+
+
+
+
+    /*        char c='r';
             File fis = new File("/home/m4mbr3/documents/bording_pass/rodi/BoardingPass.pdf");
             byte[] fileData = new byte[(int) fis.length()];
             DataInputStream dis = new DataInputStream((new FileInputStream(fis)));
@@ -63,7 +174,7 @@ public class DropboxLikeClient {
                 c = 'e';
             }
             //dropboxImpl.remove("mambro","my_passwd");
-            dropboxImpl.logout("mambro","EE:EE:EE:EE:EE:EE");
+            dropboxImpl.logout("mambro","EE:EE:EE:EE:EE:EE");*/
         }
         catch (Exception e) {
             e.printStackTrace();
