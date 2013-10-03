@@ -36,6 +36,8 @@ public class DropboxLikeClient {
         return hexString.toString();
     }
     public static void menu() {
+        System.out.print("\033[H\033[2J");
+        System.out.flush();
         System.out.println ("/*************************  DropboxLike   ***************************/");
         System.out.println ("/***********  Author : Andrea Mambretti   Version 1.0   *************/ ");
         System.out.println ("/********************************************************************/ ");
