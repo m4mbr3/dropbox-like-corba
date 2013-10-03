@@ -8,6 +8,10 @@ import java.util.*;
 import java.io.*;
 import java.io.DataInputStream;
 import java.security.MessageDigest;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.net.SocketException;
+import java.net.NetworkInterface;
 
 public class DropboxLikeClient {
     static Repository dropboxImpl;
@@ -36,7 +40,7 @@ public class DropboxLikeClient {
         return hexString.toString();
     }
     public static void menu() {
-        System.out.print("\033[H\033[2J");
+                System.out.print("\033[H\033[2J");
         System.out.flush();
         System.out.println ("/*************************  DropboxLike   ***************************/");
         System.out.println ("/***********  Author : Andrea Mambretti   Version 1.0   *************/ ");
@@ -103,7 +107,62 @@ public class DropboxLikeClient {
         }while(!dropboxImpl.remove(username, password));
     }
     public static void login() {
+        String username;
+        String password;
+        String dev_id = new String();
+        Console c = System.console();
+        boolean fail = false;
+        do {
+            try{
+                if (!fail) {
+                    InetAddress ip = InetAddress.getLocalHost();
+                    NetworkInterface network = NetworkInterface.getByInetAddress(ip);
+                    byte[] mac = network.getHardwareAddress();
+                    if (mac != null) {
+                    StringBuilder sb = new StringBuilder();
+                    for (int i=0; i < mac.length; i++) {
+                        sb.append(String.format("%20X%s", mac[i], (i < mac.length -1) ? "-" : ""));
+                    }
+                    dev_id = sb.toString();
+                    }
+                    else fail = true;
+                }
+                else {
+                     System.out.println("Error while I was reading the mac address so I will try to use the hostname of your machine");
+                    dev_id = InetAddress.getLocalHost().getHostName();
+                    fail = false;
+                }
+            }
+            catch (UnknownHostException e) {
+                fail = true;
+            }
+            catch (SocketException e) {
+                fail = true;
+            }
+        }while (fail);
+        username = c.readLine("Insert your username: ");
+        char[] pas = c.readPassword("Insert the password for " + username + ": ");
+        password = new String(pas);
+        String res = dropboxImpl.login(username,password,dev_id);
+        if (res.compareTo("ALREADY_LOGGED") == 0) {
+            System.out.println("You are already logged!!!");
+            try {
+                Thread.sleep(1500);
+            }
+            catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
 
+        else if (res.compareTo("INVALID_USER") == 0) {
+            System.out.println("Error: maybe the user or/and the password are wrong");
+            try {
+                    Thread.sleep(1500);
+                }
+            catch (InterruptedException e) {
+                    e.printStackTrace();
+            }
+        }
     }
 
     public static void logout() {
