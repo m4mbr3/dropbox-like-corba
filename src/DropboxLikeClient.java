@@ -15,6 +15,7 @@ import java.net.NetworkInterface;
 
 public class DropboxLikeClient {
     static Repository dropboxImpl;
+    static String token;
     static String SHAchecksumfile(String path) {
         StringBuffer hexString = new StringBuffer();
         try{
@@ -40,22 +41,24 @@ public class DropboxLikeClient {
         return hexString.toString();
     }
     public static void menu() {
-                System.out.print("\033[H\033[2J");
+        System.out.print("\033[H\033[2J");
         System.out.flush();
+
         System.out.println ("/*************************  DropboxLike   ***************************/");
         System.out.println ("/***********  Author : Andrea Mambretti   Version 1.0   *************/ ");
         System.out.println ("/********************************************************************/ ");
         System.out.println ("Select an operation:");
         System.out.println ("");
-        System.out.println ("    1) Subscribe an account ");
-        System.out.println ("    2) Remove account");
-        System.out.println ("    3) Login");
-        System.out.println ("    4) Logout");
-        System.out.println ("    5) Send file");
-        System.out.println ("    6) Remove file");
-        System.out.println ("    7) Exit");
+        System.out.println ("    subscribe");
+        System.out.println ("    remove_account");
+        System.out.println ("    login");
+        System.out.println ("    logout");
+        System.out.println ("    send_file");
+        System.out.println ("    remove_file");
+        System.out.println ("    clear");
+        System.out.println ("    help");
+        System.out.println ("    exit");
         System.out.println ("");
-        System.out.print ("dropboxlike > ");
     }
 
     public static void subscribe() {
@@ -106,7 +109,7 @@ public class DropboxLikeClient {
 
         }while(!dropboxImpl.remove(username, password));
     }
-    public static void login() {
+    public static String login() {
         String username;
         String password;
         String dev_id = new String();
@@ -146,23 +149,12 @@ public class DropboxLikeClient {
         String res = dropboxImpl.login(username,password,dev_id);
         if (res.compareTo("ALREADY_LOGGED") == 0) {
             System.out.println("You are already logged!!!");
-            try {
-                Thread.sleep(1500);
-            }
-            catch (InterruptedException e) {
-                e.printStackTrace();
-            }
         }
 
         else if (res.compareTo("INVALID_USER") == 0) {
             System.out.println("Error: maybe the user or/and the password are wrong");
-            try {
-                    Thread.sleep(1500);
-                }
-            catch (InterruptedException e) {
-                    e.printStackTrace();
-            }
         }
+        return res;
     }
 
     public static void logout() {
@@ -178,6 +170,7 @@ public class DropboxLikeClient {
     }
 
     public static void main(String[] args) {
+        token = "";
         try{
             // create and initialize the ORB
             ORB orb = ORB.init(args, null);
@@ -187,37 +180,46 @@ public class DropboxLikeClient {
             String name = "DBServer";
             dropboxImpl = RepositoryHelper.narrow(ncRef.resolve_str(name));
             Console con = System.console();
-            Scanner read = new Scanner(con.reader());
-            int c=0;
-            while (c != 7) {
-                do {
-                    menu();
-                    c = read.nextInt();
-                } while(c < 0 || c > 8);
-                if (c == 1) {
+            //Scanner read = new Scanner(con.reader());
+            String c="";
+            menu ();
+            while (c.compareTo("exit") != 0) {
+                c = con.readLine("dropboxlike $ ");
+                if (c.compareTo("subscribe") == 0) {
                     subscribe();
                 }
-                else if (c == 2) {
+                else if (c.compareTo("remove_account") == 0) {
                     remove_account();
                 }
-                else if (c == 3) {
-                    login();
+                else if (c.compareTo("login") == 0) {
+                    token = login();
                 }
-                else if (c == 4) {
-                    logout();
+                else if (c.compareTo("logout") == 0) {
+                    if (token.compareTo("") != 0) {
+                        logout();
+                        token = "";
+                    }
+                    else {
+                        System.out.println("Error: you are not logged");
+                    }
                 }
-                else if (c == 5) {
+                else if (c.compareTo("send_file") == 0) {
                     send_file();
                 }
-                else if (c == 6) {
+                else if (c.compareTo("remove_file") == 0) {
                     remove_file();
                 }
+                else if (c.compareTo("help") == 0) {
+                    menu();
+                }
+                else if (c.compareTo("clear") == 0) {
+                    System.out.print("\033[H\033[2J");
+                    System.out.flush();
+                }
+                else if (c.compareTo("exit") != 0) {
+                    System.out.println("dropboxlike:"+ c + ":command not found");
+                }
             }
-
-
-
-
-    /*        char c='r';
             File fis = new File("/home/m4mbr3/documents/bording_pass/rodi/BoardingPass.pdf");
             byte[] fileData = new byte[(int) fis.length()];
             DataInputStream dis = new DataInputStream((new FileInputStream(fis)));
@@ -230,12 +232,12 @@ public class DropboxLikeClient {
             entity.name = "BoardingPass.pdf";
             dropboxImpl.subscribe("Andrea","Mambretti","mambro", "my_passwd");
             String token = dropboxImpl.login("mambro", "my_passwd","EE:EE:EE:EE:EE:EE");
-            while (c != 'e') {
+            //while (c != 'e') {
                 System.out.println(dropboxImpl.send(entity, "mambro", token ));
-                c = 'e';
-            }
+             //   c = 'e';
+            //}
             //dropboxImpl.remove("mambro","my_passwd");
-            dropboxImpl.logout("mambro","EE:EE:EE:EE:EE:EE");*/
+            dropboxImpl.logout("mambro","EE:EE:EE:EE:EE:EE");
         }
         catch (Exception e) {
             e.printStackTrace();
