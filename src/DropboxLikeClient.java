@@ -16,6 +16,10 @@ import java.net.NetworkInterface;
 public class DropboxLikeClient {
     static Repository dropboxImpl;
     static String token;
+    static String user_name;
+    static String user_dev_id;
+
+
     static String SHAchecksumfile(String path) {
         StringBuffer hexString = new StringBuffer();
         try{
@@ -40,6 +44,9 @@ public class DropboxLikeClient {
         }
         return hexString.toString();
     }
+
+
+
     public static void menu() {
         System.out.print("\033[H\033[2J");
         System.out.flush();
@@ -109,60 +116,84 @@ public class DropboxLikeClient {
 
         }while(!dropboxImpl.remove(username, password));
     }
-    public static String login() {
-        String username;
-        String password;
-        String dev_id = new String();
-        Console c = System.console();
-        boolean fail = false;
-        do {
-            try{
-                if (!fail) {
-                    InetAddress ip = InetAddress.getLocalHost();
-                    NetworkInterface network = NetworkInterface.getByInetAddress(ip);
-                    byte[] mac = network.getHardwareAddress();
-                    if (mac != null) {
-                    StringBuilder sb = new StringBuilder();
-                    for (int i=0; i < mac.length; i++) {
-                        sb.append(String.format("%20X%s", mac[i], (i < mac.length -1) ? "-" : ""));
-                    }
-                    dev_id = sb.toString();
-                    }
-                    else fail = true;
-                }
-                else {
-                     System.out.println("Error while I was reading the mac address so I will try to use the hostname of your machine");
-                    dev_id = InetAddress.getLocalHost().getHostName();
-                    fail = false;
-                }
-            }
-            catch (UnknownHostException e) {
-                fail = true;
-            }
-            catch (SocketException e) {
-                fail = true;
-            }
-        }while (fail);
-        username = c.readLine("Insert your username: ");
-        char[] pas = c.readPassword("Insert the password for " + username + ": ");
-        password = new String(pas);
-        String res = dropboxImpl.login(username,password,dev_id);
-        if (res.compareTo("ALREADY_LOGGED") == 0) {
-            System.out.println("You are already logged!!!");
-        }
 
-        else if (res.compareTo("INVALID_USER") == 0) {
-            System.out.println("Error: maybe the user or/and the password are wrong");
+    public static void login() {
+        if (!dropboxImpl.isLogged(user_name, token)) {
+            String username;
+            String password;
+            String dev_id = new String();
+            Console c = System.console();
+            boolean fail = false;
+            do {
+                try{
+                    if (!fail) {
+                        InetAddress ip = InetAddress.getLocalHost();
+                        NetworkInterface network = NetworkInterface.getByInetAddress(ip);
+                        byte[] mac = network.getHardwareAddress();
+                        if (mac != null) {
+                        StringBuilder sb = new StringBuilder();
+                        for (int i=0; i < mac.length; i++) {
+                            sb.append(String.format("%20X%s", mac[i], (i < mac.length -1) ? "-" : ""));
+                        }
+                        dev_id = sb.toString();
+                        }
+                        else fail = true;
+                    }
+                    else {
+                         System.out.println("Error while I was reading the mac address so I will try to use the hostname of your machine");
+                        dev_id = InetAddress.getLocalHost().getHostName();
+                        fail = false;
+                    }
+                }
+                catch (UnknownHostException e) {
+                    fail = true;
+                }
+                catch (SocketException e) {
+                    fail = true;
+                }
+            }while (fail);
+            username = c.readLine("Insert your username: ");
+            char[] pas = c.readPassword("Insert the password for " + username + ": ");
+            password = new String(pas);
+            String res = dropboxImpl.login(username,password,dev_id);
+            if (res.compareTo("INVALID_USER") == 0) {
+                System.out.println("Error: maybe the user or/and the password are wrong");
+                return;
+            }
+            else {
+                user_name = username;
+                user_dev_id = dev_id;
+                token = res;
+            }
         }
-        return res;
+        else {
+            System.out.println("You are already logged!!!");
+            System.out.println("If you want to log in with a different user, please log out first");
+        }
     }
 
     public static void logout() {
-
+        if (!dropboxImpl.isLogged(user_name, token) ) {
+            System.out.println("Error: you are not logged");
+            return;
+        }
+        else {
+            dropboxImpl.logout(user_name,user_dev_id,token);
+            user_name = "";
+            user_dev_id = "";
+            token = "";
+        }
     }
 
     public static void send_file() {
-
+        if (!dropboxImpl.isLogged(user_name, token)) {
+            System.out.println("Error: you are not logged");
+            return;
+        }
+        else {
+            //TODO Insert FileAtRepository data
+            //dropboxImpl.send();
+        }
     }
 
     public static void remove_file() {
@@ -171,6 +202,8 @@ public class DropboxLikeClient {
 
     public static void main(String[] args) {
         token = "";
+        user_name = "";
+        user_dev_id = "";
         try{
             // create and initialize the ORB
             ORB orb = ORB.init(args, null);
@@ -180,11 +213,13 @@ public class DropboxLikeClient {
             String name = "DBServer";
             dropboxImpl = RepositoryHelper.narrow(ncRef.resolve_str(name));
             Console con = System.console();
-            //Scanner read = new Scanner(con.reader());
             String c="";
             menu ();
             while (c.compareTo("exit") != 0) {
-                c = con.readLine("dropboxlike $ ");
+                if(user_name.compareTo("") == 0)
+                    c = con.readLine("dropboxlike $ ").trim();
+                else
+                    c = con.readLine(user_name+"@dropboxlike $ ").trim();
                 if (c.compareTo("subscribe") == 0) {
                     subscribe();
                 }
@@ -192,19 +227,18 @@ public class DropboxLikeClient {
                     remove_account();
                 }
                 else if (c.compareTo("login") == 0) {
-                    token = login();
+                    login();
                 }
                 else if (c.compareTo("logout") == 0) {
-                    if (token.compareTo("") != 0) {
-                        logout();
-                        token = "";
+                    logout();
+                }
+                else if (c.compareTo("send_file") == 0) {
+                    if (dropboxImpl.isLogged(user_name, token)) {
+                        send_file();
                     }
                     else {
                         System.out.println("Error: you are not logged");
                     }
-                }
-                else if (c.compareTo("send_file") == 0) {
-                    send_file();
                 }
                 else if (c.compareTo("remove_file") == 0) {
                     remove_file();
@@ -220,7 +254,10 @@ public class DropboxLikeClient {
                     System.out.println("dropboxlike:"+ c + ":command not found");
                 }
             }
-            File fis = new File("/home/m4mbr3/documents/bording_pass/rodi/BoardingPass.pdf");
+            if (dropboxImpl.isLogged(user_name, token)) {
+                    logout();
+            }
+           /* File fis = new File("/home/m4mbr3/documents/bording_pass/rodi/BoardingPass.pdf");
             byte[] fileData = new byte[(int) fis.length()];
             DataInputStream dis = new DataInputStream((new FileInputStream(fis)));
             dis.readFully(fileData);
@@ -237,7 +274,8 @@ public class DropboxLikeClient {
              //   c = 'e';
             //}
             //dropboxImpl.remove("mambro","my_passwd");
-            dropboxImpl.logout("mambro","EE:EE:EE:EE:EE:EE");
+            //dropboxImpl.logout("mambro","EE:EE:EE:EE:EE:EE");
+            */
         }
         catch (Exception e) {
             e.printStackTrace();

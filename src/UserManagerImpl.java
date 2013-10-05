@@ -33,7 +33,7 @@ public class UserManagerImpl extends UserManagerPOA {
 
     public boolean isLogged(String username, String token) {
         for (Logged el : logged_user) {
-            if (el.dev.username.equals(username) && el.token.equals(token)) {
+            if (el.dev.username.compareTo(username) == 0 && el.token.compareTo(token) == 0) {
                 return true;
             }
         }
@@ -49,13 +49,14 @@ public class UserManagerImpl extends UserManagerPOA {
         users.add(element);
         return true;
     }
+
     public String login(String username, String password, String dev_id) {
         for (UserInfo el : users) {
-            System.out.println(el.password+"\n"+SHAchecksumpassword(password));
             if(el.username.compareTo(username) == 0 && el.password.compareTo(SHAchecksumpassword(password)) == 0) {
                 for (Logged log : logged_user) {
                     if(log.dev.dev_id.compareTo(dev_id) == 0 && log.dev.username.compareTo(username) == 0) {
-                        return "ALREADY_LOGGED";
+                        //To do not have  ghost logged user, the program regive the previous session token to the user.
+                        return log.token;
                     }
                 }
                 String sha = SHAchecksumpassword(new Integer(new Random().nextInt()).toString());
@@ -65,15 +66,21 @@ public class UserManagerImpl extends UserManagerPOA {
         }
         return "INVALID_USER";
     }
-    public boolean logout(String username, String device) {
+
+    public boolean logout(String username, String device, String token) {
+        Logged to_rm=null;
         for (Logged el : logged_user) {
-            if (el.dev.username.equals(username) && el.dev.dev_id.equals(device)) {
-                logged_user.remove(el);
-                return true;
+            if (el.dev.username.compareTo(username) == 0 && el.dev.dev_id.compareTo(device) == 0 && el.token.compareTo(token) == 0 ) {
+                to_rm = el;
             }
+        }
+        if (to_rm != null) {
+            logged_user.remove(to_rm);
+            return true;
         }
         return false;
     }
+
     public boolean check_username(String username) {
         for (UserInfo s : users) {
             if (s.username.compareTo(username) == 0) {
@@ -82,6 +89,7 @@ public class UserManagerImpl extends UserManagerPOA {
         }
         return true;
     }
+
     public boolean remove (String username, String password) {
         for (UserInfo el : users) {
             if(el.username.compareTo(username) == 0 && el.password.compareTo(SHAchecksumpassword(password)) == 0) {
@@ -98,7 +106,6 @@ public class UserManagerImpl extends UserManagerPOA {
                 return true;
             }
         }
-        System.out.println("ERRORE remove");
         return false;
     }
 }

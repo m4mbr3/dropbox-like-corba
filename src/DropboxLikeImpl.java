@@ -36,6 +36,9 @@ public class DropboxLikeImpl extends RepositoryPOA {
         orb = orb_val;
     }
 
+    public boolean isLogged(String username, String token) {
+        return um.isLogged(username, token);
+    }
     public static void delete (File file) throws IOException {
         if (file.isDirectory()) {
             if (file.list().length == 0) {
@@ -106,8 +109,8 @@ public class DropboxLikeImpl extends RepositoryPOA {
         return um.login(username, password,dev_id);
     }
 
-    public boolean logout(String username, String dev_id) {
-        return um.logout(username, dev_id);
+    public boolean logout(String username, String dev_id, String token) {
+        return um.logout(username, dev_id, token);
     }
 
     public boolean remove(String username, String password) {
