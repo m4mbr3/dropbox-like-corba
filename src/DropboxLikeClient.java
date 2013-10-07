@@ -121,7 +121,15 @@ public class DropboxLikeClient {
 
         }while(!dropboxImpl.remove(username, password));
         File  path =  new File(home_env + "/" + user_name);
-        path.delete();
+        try {
+            delete(path);
+        }
+        catch(IOException e) {
+            System.out.println("Error: Something went wrong while deleting the directory");
+        }
+        user_name = "";
+        token = "";
+        user_dev_id = "";
     }
 
     public static void load_list() {
@@ -148,6 +156,28 @@ public class DropboxLikeClient {
             }
         }
     }
+    public static void delete (File file) throws IOException {
+        if (file.isDirectory()) {
+            if (file.list().length == 0) {
+                file.delete();
+            }
+            else {
+                String files[] = file.list();
+                for (String temp :files) {
+                    File fileToDelete = new File(file, temp);
+                    delete(fileToDelete);
+                }
+                if(file.list().length == 0) {
+                    file.delete();
+                }
+            }
+        }
+        else {
+            file.delete();
+        }
+    }
+
+
     public static void login() {
         if (!dropboxImpl.isLogged(user_name, token)) {
             String username;

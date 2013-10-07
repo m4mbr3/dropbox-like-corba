@@ -111,6 +111,15 @@ public class DropboxLikeImpl extends RepositoryPOA {
             if(um.subscribe(name, surname, username, password)) {
                 File user_dir = new File(server_home+"/"+username);
                 user_dir.mkdir();
+                File w = new File (server_home+"/users_list.txt");
+                if(w.exists())
+                    w.createNewFile();
+                FileWriter  fileWri = new FileWriter(server_home+"/users_list.txt", true);
+                BufferedWriter  bufWri = new BufferedWriter(fileWri);
+                PrintWriter out = new PrintWriter(bufWri);
+                out.println(name+":"+surname+":"+username+":"+password);
+                out.close();
+
                 return true;
             }
             else {
