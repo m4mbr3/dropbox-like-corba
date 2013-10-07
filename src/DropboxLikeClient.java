@@ -64,7 +64,8 @@ public class DropboxLikeClient {
         System.out.println ("    send_file");
         System.out.println ("    remove_file");
         System.out.println ("    clear");
-        System.out.println ("    dir ");
+        System.out.println ("    dir");
+        System.out.println ("    ls");
         System.out.println ("    help");
         System.out.println ("    exit");
         System.out.println ("");
@@ -295,7 +296,61 @@ public class DropboxLikeClient {
     }
 
     public static void remove_file() {
-
+        if (!dropboxImpl.isLogged(user_name,token)) {
+            System.out.println("Error: you are not logged");
+            return;
+        }
+        else {
+            Console con = System.console();
+            String filename;
+            boolean correct = true;
+            SmallL toDelete = null;
+            do{
+                dir();
+                filename = con.readLine("Insert the file to delete: ").trim();
+                for (SmallL element : user_file_list) {
+                    if (element.name.compareTo(filename) == 0) {
+                        correct = false;
+                        toDelete = element;
+                    }
+                }
+                if (correct) {
+                    System.out.println("Error: the filename provided is not valid. Try again...");
+                }
+            }while(correct);
+            try {
+                if (dropboxImpl.delete(filename,user_name, token)) {
+                    //delete element from user_file_list
+                    user_file_list.remove(toDelete);
+                    File temp_ = new File(home_env+"/"+user_name+"/.data");
+                    temp_.delete();
+                    temp_ = new File(home_env+"/"+user_name+"/.data");
+                    PrintWriter tempw = new PrintWriter(temp_);
+                    for (SmallL el : user_file_list) {
+                        tempw.println(el.name+":"+el.md5+":"+user_name);
+                    }
+                    tempw.close();
+                }
+                else {
+                    System.out.println("It is not possible to remove the file now. Please try later");
+                }
+            }
+            catch (OwnerException e) {
+                e.printStackTrace();
+            }
+            catch (FileDoesntExist e) {
+                e.printStackTrace();
+            }
+            catch (TokenException e) {
+                e.printStackTrace();
+            }
+            catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
     public static void dir() {
         if (!dropboxImpl.isLogged(user_name,token)) {
@@ -307,7 +362,7 @@ public class DropboxLikeClient {
             System.out.println("Your repository contains: ");
             if(user_file_list != null)
                 for (SmallL l : user_file_list) {
-                    System.out.println(i+") "+ l.name + " " + l.md5);
+                    System.out.println(i+") "+ l.name);
                     i++;
                 }
             if(i == 0)
@@ -361,7 +416,7 @@ public class DropboxLikeClient {
                 else if (c.compareTo("help") == 0) {
                     menu();
                 }
-                else if (c.compareTo("dir") == 0) {
+                else if (c.compareTo("dir") == 0 || c.compareTo("ls")==0) {
                     dir();
                 }
                 else if (c.compareTo("clear") == 0) {

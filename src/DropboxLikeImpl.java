@@ -131,24 +131,23 @@ public class DropboxLikeImpl extends RepositoryPOA {
     }
 
     public boolean delete (String filename, String username, String token) {
-        if (um.isLogged(username, token)) {
-            for (FileAtRepository f : repository) {
-                if (f.ownerUserName.equals(username) && f.name.equals(filename)) {
-                    try{
-                        File file = new File(username+"/"+f.name);
-                        if (file.delete())
-                            System.out.println("File Deleted");
-                        else
-                            System.out.println("File Delation Fail");
-                        file = new File(username+"/"+f.name+".info");
-                        if (file.delete())
-                            System.out.println("File Deleted");
-                        else
-                            System.out.println("File Delation Fail");
-                    }
-                    catch (Exception e ) {
-                        e.printStackTrace();
-                    }
+        for (FileAtRepository f : repository) {
+            if (f.ownerUserName.equals(username) && f.name.equals(filename)) {
+                try{
+                    File file = new File(server_home+"/"+username+"/"+f.name);
+                    if (file.delete())
+                        System.out.println(f.name + "deleted");
+                    else
+                        System.out.println("File Delation Fail");
+                    file = new File(server_home+"/"+username+"/"+f.name+".info");
+                    if (file.delete())
+                        System.out.println("Metadata file deleted");
+                    else
+                        System.out.println("File Delation Fail");
+                    return true;
+                }
+                catch (Exception e ) {
+                    e.printStackTrace();
                 }
             }
         }
