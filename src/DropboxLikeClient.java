@@ -101,6 +101,8 @@ public class DropboxLikeClient {
             Arrays.fill(newPassword2, ' ');
         } while (noMatch);
         dropboxImpl.subscribe(name,surname, username, password);
+        File dir = new File(home_env+"/"+user_name);
+        dir.mkdirs();
     }
 
     public static void remove_account() {
@@ -221,8 +223,6 @@ public class DropboxLikeClient {
             return;
         }
         else {
-            //TODO Insert FileAtRepository data
-            //dropboxImpl.send();
             Console c = System.console();
             File element = null;
             boolean exist = true;
@@ -232,14 +232,20 @@ public class DropboxLikeClient {
                     path = c.readLine("Insert the _complete_ path to the file to upload: ");
                     element = new File(path);
                     boolean isReadable = element.canRead();
+                    boolean isDirectory = element.isDirectory();
+                    if (isDirectory) throw new FileNotFoundException();
                     if (isReadable)
                         exist = false;
                     else
                         throw new IOException();
                 }
-                catch (IOException e){
-                    System.out.println("File either does not readable or does not exist. Try again...");
+                catch (FileNotFoundException e) {
+                    System.out.println("Error: File either does not exist or is a directory. Try again...");
                 }
+                catch (IOException e){
+                    System.out.println("Error: File either does not readable or does not exist. Try again...");
+                }
+
             }
             try{
                 byte[] fileData = new byte[(int) element.length()];
@@ -251,6 +257,12 @@ public class DropboxLikeClient {
                 entity.md5 = SHAchecksumfile(path);
                 entity.cont = fileData;
                 entity.name = element.getName();
+                for (SmallL l : user_file_list) {
+                    if (l.name.compareTo(entity.name) == 0 && l.md5.compareTo(entity.md5) == 0){
+                        System.out.println("Error: The file is already in your repository");
+                        return;
+                    }
+                }
                 //Create a copy in the local repository
                 FileOutputStream local_copy = new FileOutputStream (home_env+"/"+user_name+"/"+entity.name);
                 local_copy.write(entity.cont);
@@ -260,10 +272,13 @@ public class DropboxLikeClient {
                 if(!data.exists()) {
                     data.createNewFile();
                 }
-                FileWriter fileWri = new FileWriter(data.getName(), true);
+                FileWriter fileWri = new FileWriter(home_env+"/"+user_name+"/.data", true);
                 BufferedWriter bufWri = new BufferedWriter (fileWri);
-                bufWri.write(entity.name+":"+entity.md5+":"+entity.ownerUserName);
-                bufWri.close();
+                PrintWriter out = new PrintWriter(bufWri);
+                out.println(entity.name+":"+entity.md5+":"+entity.ownerUserName);
+                out.close();
+                //Updating the user_list
+                user_file_list.add(new SmallL(entity.name, entity.md5));
                 //Send file to remote server
                 dropboxImpl.send(entity, user_name, token);
             }
@@ -290,10 +305,13 @@ public class DropboxLikeClient {
         else {
             int i=0;
             System.out.println("Your repository contains: ");
-            for (SmallL l : user_file_list) {
-                System.out.println(i+") "+ l.name + " " + l.md5);
-                i++;
-            }
+            if(user_file_list != null)
+                for (SmallL l : user_file_list) {
+                    System.out.println(i+") "+ l.name + " " + l.md5);
+                    i++;
+                }
+            if(i == 0)
+                System.out.println("No file found in your repository");
         }
     }
 
@@ -303,7 +321,9 @@ public class DropboxLikeClient {
         user_dev_id = "";
         user_file_list = new ArrayList<SmallL>();
         home_env = System.getenv("DROPBOXLIKECLIENT_HOME");
-        if (home_env == null) home_env="";
+        if (home_env == null) home_env="dropboxlikeclient";
+        else
+            home_env = home_env + "/dropboxlikeclient";
         try{
             // create and initialize the ORB
             ORB orb = ORB.init(args, null);
@@ -319,7 +339,7 @@ public class DropboxLikeClient {
                 if(user_name.compareTo("") == 0)
                     c = con.readLine("dropboxlike $ ").trim();
                 else
-                    c = con.readLine(user_name+"@dropboxlike $ ).trim()");
+                    c = con.readLine(user_name+"@dropboxlike $ ").trim();
                 if (c.compareTo("subscribe") == 0) {
                     subscribe();
                 }
