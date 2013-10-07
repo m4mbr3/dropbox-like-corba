@@ -18,7 +18,8 @@ public class DropboxLikeClient {
     static String token;
     static String user_name;
     static String user_dev_id;
-
+    static String home_env;
+    static ArrayList<SmallL> user_file_list;
 
     static String SHAchecksumfile(String path) {
         StringBuffer hexString = new StringBuffer();
@@ -117,6 +118,23 @@ public class DropboxLikeClient {
         }while(!dropboxImpl.remove(username, password));
     }
 
+    public static void load_list() {
+        File file = new File(home_env + "/"+ user_name + "/.data");
+        try{
+            Scanner sc = new Scanner(file);
+            while (sc.hasNextLine()) {
+                String line =  sc.nextLine();
+                String[] tmp = line.split(":");
+                if (tmp[2].compareTo(user_name) == 0) {
+                    user_file_list.add(new SmallL(tmp[0],tmp[1]));
+                }
+            }
+
+        }
+        catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
     public static void login() {
         if (!dropboxImpl.isLogged(user_name, token)) {
             String username;
@@ -164,6 +182,7 @@ public class DropboxLikeClient {
                 user_name = username;
                 user_dev_id = dev_id;
                 token = res;
+                load_list();
             }
         }
         else {
@@ -199,11 +218,28 @@ public class DropboxLikeClient {
     public static void remove_file() {
 
     }
+    public static void dir() {
+        if (!dropboxImpl.isLogged(user_name,token)) {
+            System.out.println("Error: you are not logged");
+            return;
+        }
+        else {
+            int i=0;
+            System.out.println("Your repository contains: ");
+            for (SmallL l : user_file_list) {
+                System.out.println(i+") "+ l.name + " " + l.md5);
+                i++;
+            }
+        }
+    }
 
     public static void main(String[] args) {
         token = "";
         user_name = "";
         user_dev_id = "";
+        user_file_list = new ArrayList<SmallL>();
+        home_env = System.getenv("DROPBOXLIKECLIENT_HOME");
+        if (home_env == null) home_env="";
         try{
             // create and initialize the ORB
             ORB orb = ORB.init(args, null);
@@ -219,7 +255,7 @@ public class DropboxLikeClient {
                 if(user_name.compareTo("") == 0)
                     c = con.readLine("dropboxlike $ ").trim();
                 else
-                    c = con.readLine(user_name+"@dropboxlike $ ").trim();
+                    c = con.readLine(user_name+"@dropboxlike $ ).trim()");
                 if (c.compareTo("subscribe") == 0) {
                     subscribe();
                 }
@@ -233,18 +269,16 @@ public class DropboxLikeClient {
                     logout();
                 }
                 else if (c.compareTo("send_file") == 0) {
-                    if (dropboxImpl.isLogged(user_name, token)) {
-                        send_file();
-                    }
-                    else {
-                        System.out.println("Error: you are not logged");
-                    }
+                    send_file();
                 }
                 else if (c.compareTo("remove_file") == 0) {
                     remove_file();
                 }
                 else if (c.compareTo("help") == 0) {
                     menu();
+                }
+                else if (c.compareTo("dir") == 0) {
+                    dir();
                 }
                 else if (c.compareTo("clear") == 0) {
                     System.out.print("\033[H\033[2J");

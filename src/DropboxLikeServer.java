@@ -21,7 +21,6 @@ public class DropboxLikeServer {
             String home_env = System.getenv("DROPBOXLIKE_HOME");
             if (home_env != null)
                 dropbox.set_home(home_env +"/dropboxlike");
-            System.out.println("THE HOME IS : "+dropbox.get_home());
             File home_dir = new File(dropbox.get_home());
             home_dir.mkdirs();
             dropbox.setORB(orb);
