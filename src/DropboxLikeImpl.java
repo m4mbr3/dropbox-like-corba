@@ -71,9 +71,14 @@ public class DropboxLikeImpl extends RepositoryPOA {
                 FileOutputStream writer = new FileOutputStream(server_home+"/"+username+"/"+file.name);
                 writer.write(file.cont);
                 writer.close();
-                PrintWriter w = new PrintWriter (server_home+"/"+username+"/"+file.name+".info");
-                w.println(file.name+": "+file.md5+":"+file.ownerUserName);
-                w.close();
+                File w = new File (server_home+"/"+username+"/.user.info");
+                if(w.exists())
+                    w.createNewFile();
+                FileWriter  fileWri = new FileWriter(server_home+"/"+username+"/.user.info", true);
+                BufferedWriter  bufWri = new BufferedWriter(fileWri);
+                PrintWriter out = new PrintWriter(bufWri);
+                out.println(file.name+": "+file.md5+":"+file.ownerUserName);
+                out.close();
             }
             catch (IOException e) {
                 e.printStackTrace();
@@ -85,12 +90,20 @@ public class DropboxLikeImpl extends RepositoryPOA {
 
     public SmallL[] askListUser (String username, String token) {
         ArrayList<SmallL> list = new ArrayList<SmallL>();
-        for (FileAtRepository f : repository) {
-            if (f.ownerUserName.equals(username)) {
-                list.add(new SmallL(f.name, f.md5));
-            }
+        File userlist = new File(server_home+"/"+username+"/.user.info");
+        Scanner sc=null;
+        try {
+            sc = new Scanner(userlist);
         }
-         SmallL[] smallL = list.toArray(new SmallL[list.size()]);
+        catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        while(sc.hasNext()) {
+            String line = sc.nextLine();
+            String[] tmp = line.split(":");
+            list.add(new SmallL(tmp[0],tmp[1]));
+        }
+        SmallL[] smallL = list.toArray(new SmallL[list.size()]);
         return smallL;
     }
 
@@ -135,15 +148,23 @@ public class DropboxLikeImpl extends RepositoryPOA {
             if (f.ownerUserName.equals(username) && f.name.equals(filename)) {
                 try{
                     File file = new File(server_home+"/"+username+"/"+f.name);
-                    if (file.delete())
-                        System.out.println(f.name + "deleted");
-                    else
+                    if (file.delete()) {
+                        System.out.println(f.name + " deleted");
+                    }
+                    else {
                         System.out.println("File Delation Fail");
-                    file = new File(server_home+"/"+username+"/"+f.name+".info");
-                    if (file.delete())
-                        System.out.println("Metadata file deleted");
-                    else
-                        System.out.println("File Delation Fail");
+                    }
+                    SmallL[] list = askListUser(username, token);
+                    File temp_ = new File (server_home+"/"+username+"/.user.info");
+                    temp_.delete();
+                    temp_ = new File(server_home+"/"+username+"/.user.info");
+                    PrintWriter tempw = new PrintWriter(temp_);
+                    for (SmallL el : list) {
+                        if (el.name.compareTo(filename) != 0) {
+                            tempw.println(el.name+":"+el.md5+":"+username);
+                        }
+                    }
+                    tempw.close();
                     return true;
                 }
                 catch (Exception e ) {
@@ -154,11 +175,15 @@ public class DropboxLikeImpl extends RepositoryPOA {
         return false;
     }
 
+    public void bootstrap (){
+
+    }
     public boolean check_username(String username) {
         return um.check_username(username);
     }
     public void shutdown() {
             orb.shutdown(false);
+
             }
 }
 

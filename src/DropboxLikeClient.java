@@ -120,6 +120,8 @@ public class DropboxLikeClient {
             first = true;
 
         }while(!dropboxImpl.remove(username, password));
+        File  path =  new File(home_env + "/" + user_name);
+        path.delete();
     }
 
     public static void load_list() {
@@ -129,9 +131,7 @@ public class DropboxLikeClient {
             while (sc.hasNextLine()) {
                 String line =  sc.nextLine();
                 String[] tmp = line.split(":");
-                if (tmp[2].compareTo(user_name) == 0) {
-                    user_file_list.add(new SmallL(tmp[0],tmp[1]));
-                }
+                user_file_list.add(new SmallL(tmp[0],tmp[1]));
             }
         }
         catch (FileNotFoundException e) {

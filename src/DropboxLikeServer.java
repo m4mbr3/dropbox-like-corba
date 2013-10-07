@@ -36,6 +36,8 @@ public class DropboxLikeServer {
             String name = "DBServer";
             NameComponent path[] = ncRef.to_name(name);
             ncRef.rebind(path, href);
+            //server bootstrap
+            dropbox.bootstrap();
             // wait for invocations from clients
             orb.run();
         }
