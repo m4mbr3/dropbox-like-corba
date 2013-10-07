@@ -64,6 +64,7 @@ public class DropboxLikeClient {
         System.out.println ("    send_file");
         System.out.println ("    remove_file");
         System.out.println ("    clear");
+        System.out.println ("    dir ");
         System.out.println ("    help");
         System.out.println ("    exit");
         System.out.println ("");
@@ -129,10 +130,19 @@ public class DropboxLikeClient {
                     user_file_list.add(new SmallL(tmp[0],tmp[1]));
                 }
             }
-
         }
         catch (FileNotFoundException e) {
-            e.printStackTrace();
+            File path = new File (home_env + "/" + user_name);
+            File data = new File (home_env + "/" + user_name + "/.data");
+            try {
+                path.mkdirs();
+                data.createNewFile();
+            }
+            catch(IOException er) {
+                System.out.println ("Error: Impossible to create the metadata in your repository");
+                System.out.println ("Please check to be able to write at" + home_env);
+                System.out.println ("If no consider to change the base dir");
+            }
         }
     }
     public static void login() {
@@ -201,6 +211,7 @@ public class DropboxLikeClient {
             user_name = "";
             user_dev_id = "";
             token = "";
+            user_file_list = null;
         }
     }
 
@@ -212,6 +223,59 @@ public class DropboxLikeClient {
         else {
             //TODO Insert FileAtRepository data
             //dropboxImpl.send();
+            Console c = System.console();
+            File element = null;
+            boolean exist = true;
+            String path = null;
+            while(exist) {
+                try{
+                    path = c.readLine("Insert the _complete_ path to the file to upload: ");
+                    element = new File(path);
+                    boolean isReadable = element.canRead();
+                    if (isReadable)
+                        exist = false;
+                    else
+                        throw new IOException();
+                }
+                catch (IOException e){
+                    System.out.println("File either does not readable or does not exist. Try again...");
+                }
+            }
+            try{
+                byte[] fileData = new byte[(int) element.length()];
+                DataInputStream dis = new DataInputStream((new FileInputStream(element)));
+                dis.readFully(fileData);
+                dis.close();
+                FileAtRepository entity = new FileAtRepository();
+                entity.ownerUserName = user_name;
+                entity.md5 = SHAchecksumfile(path);
+                entity.cont = fileData;
+                entity.name = element.getName();
+                //Create a copy in the local repository
+                FileOutputStream local_copy = new FileOutputStream (home_env+"/"+user_name+"/"+entity.name);
+                local_copy.write(entity.cont);
+                local_copy.close();
+                //Updating of local metadata
+                File data = new File(home_env+"/"+user_name+"/.data");
+                if(!data.exists()) {
+                    data.createNewFile();
+                }
+                FileWriter fileWri = new FileWriter(data.getName(), true);
+                BufferedWriter bufWri = new BufferedWriter (fileWri);
+                bufWri.write(entity.name+":"+entity.md5+":"+entity.ownerUserName);
+                bufWri.close();
+                //Send file to remote server
+                dropboxImpl.send(entity, user_name, token);
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+            catch (TokenException e) {
+                e.printStackTrace();
+            }
+            catch (ErrorFileSending e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -291,25 +355,6 @@ public class DropboxLikeClient {
             if (dropboxImpl.isLogged(user_name, token)) {
                     logout();
             }
-           /* File fis = new File("/home/m4mbr3/documents/bording_pass/rodi/BoardingPass.pdf");
-            byte[] fileData = new byte[(int) fis.length()];
-            DataInputStream dis = new DataInputStream((new FileInputStream(fis)));
-            dis.readFully(fileData);
-            dis.close();
-            FileAtRepository entity = new FileAtRepository();
-            entity.ownerUserName = "mambro";
-            entity.md5 = SHAchecksumfile("/home/m4mbr3/documents/bording_pass/rodi/BoardingPass.pdf");
-            entity.cont = fileData;
-            entity.name = "BoardingPass.pdf";
-            dropboxImpl.subscribe("Andrea","Mambretti","mambro", "my_passwd");
-            String token = dropboxImpl.login("mambro", "my_passwd","EE:EE:EE:EE:EE:EE");
-            //while (c != 'e') {
-                System.out.println(dropboxImpl.send(entity, "mambro", token ));
-             //   c = 'e';
-            //}
-            //dropboxImpl.remove("mambro","my_passwd");
-            //dropboxImpl.logout("mambro","EE:EE:EE:EE:EE:EE");
-            */
         }
         catch (Exception e) {
             e.printStackTrace();
