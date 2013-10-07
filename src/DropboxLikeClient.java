@@ -322,6 +322,8 @@ public class DropboxLikeClient {
                 if (dropboxImpl.delete(filename,user_name, token)) {
                     //delete element from user_file_list
                     user_file_list.remove(toDelete);
+                    File file_to_delete = new File(home_env+ "/" + user_name+"/"+toDelete.name);
+                    file_to_delete.delete();
                     File temp_ = new File(home_env+"/"+user_name+"/.data");
                     temp_.delete();
                     temp_ = new File(home_env+"/"+user_name+"/.data");
