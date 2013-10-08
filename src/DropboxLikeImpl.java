@@ -11,6 +11,7 @@ import org.omg.CosNaming.NamingContextPackage.*;
 import org.omg.CORBA.*;
 import org.omg.PortableServer.*;
 import org.omg.PortableServer.POA;
+import java.security.MessageDigest;
 
 public class DropboxLikeImpl extends RepositoryPOA {
     private ArrayList<FileAtRepository> repository;
@@ -23,6 +24,24 @@ public class DropboxLikeImpl extends RepositoryPOA {
         um = new UserManagerImpl();
         server_home= new String("");
     }
+    public String SHAchecksumpassword(String password){
+        StringBuffer sb = new StringBuffer();
+        try{
+            MessageDigest md = MessageDigest.getInstance("SHA-512");
+            byte[] dataBytes = new byte[password.length()];
+            dataBytes = password.getBytes();
+            md.update(dataBytes, 0, password.length());
+            byte[] mdbytes = md.digest();
+            for (int i = 0; i < mdbytes.length; i++) {
+                sb.append(Integer.toString((mdbytes[i] & 0xff) + 0x100, 16).substring(1));
+            }
+        }
+        catch(Exception e) {
+            e.printStackTrace();
+        }
+        return sb.toString();
+    }
+
 
     public void set_home(String server_home) {
         this.server_home = server_home;
@@ -112,14 +131,24 @@ public class DropboxLikeImpl extends RepositoryPOA {
                 File user_dir = new File(server_home+"/"+username);
                 user_dir.mkdir();
                 File w = new File (server_home+"/users_list.txt");
-                if(w.exists())
-                    w.createNewFile();
-                FileWriter  fileWri = new FileWriter(server_home+"/users_list.txt", true);
+                try{
+                    if(w.exists())
+                        w.createNewFile();
+                }
+                catch (IOException e) {
+                    e.printStackTrace();
+                }
+                FileWriter fileWri = null;
+                try{
+                    fileWri = new FileWriter(server_home+"/users_list.txt", true);
+                }
+                catch (IOException e) {
+                    e.printStackTrace();
+                }
                 BufferedWriter  bufWri = new BufferedWriter(fileWri);
                 PrintWriter out = new PrintWriter(bufWri);
-                out.println(name+":"+surname+":"+username+":"+password);
+                out.println(name+":"+surname+":"+username+":"+SHAchecksumpassword(password));
                 out.close();
-
                 return true;
             }
             else {
@@ -137,6 +166,7 @@ public class DropboxLikeImpl extends RepositoryPOA {
 
     public boolean remove(String username, String password) {
         if(um.remove(username, password)) {
+            ArrayList<UserInfo> users = new ArrayList<UserInfo>();
             File user_dir = new File(server_home+"/"+username);
             try {
                 delete(user_dir);
@@ -145,6 +175,34 @@ public class DropboxLikeImpl extends RepositoryPOA {
             catch (IOException e) {
                 e.printStackTrace();
             }
+            File users_file = new File(server_home+"/users_list.txt");
+            Scanner sc = null;
+            try {
+                sc = new Scanner(users_file);
+            }
+            catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+            while (sc.hasNext()) {
+                String line = sc.nextLine();
+                System.out.println(line);
+                String[] lines=  line.split(":");
+                users.add(new UserInfo(lines[0],lines[1],lines[2], lines[3]));
+            }
+            users_file.delete();
+            FileWriter users_files = null;
+            try {
+                users_files = new FileWriter(server_home+"/users_list.txt",true);
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+            PrintWriter tempw =  new PrintWriter(users_files);
+            for(UserInfo el : users) {
+                tempw.println(el.name+":"+el.surname+":"+el.username+":"+el.password);
+            }
+            tempw.close();
+
             return false;
         }
         else {
@@ -185,7 +243,24 @@ public class DropboxLikeImpl extends RepositoryPOA {
     }
 
     public void bootstrap (){
-
+        ArrayList<UserInfo> users = new ArrayList<UserInfo>();
+        File users_file = new File(server_home+"/users_list.txt");
+        Scanner sc = null;
+        try {
+            sc = new Scanner(users_file);
+        }
+        catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        while (sc.hasNext()) {
+            String line = sc.nextLine();
+            System.out.println(line);
+            String[] lines=  line.split(":");
+            users.add(new UserInfo(lines[0],lines[1],lines[2], lines[3]));
+        }
+        for(UserInfo e : users) {
+            um.record(e.name, e.surname, e.username, e.password);
+        }
     }
     public boolean check_username(String username) {
         return um.check_username(username);

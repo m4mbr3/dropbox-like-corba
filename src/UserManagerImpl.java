@@ -49,6 +49,16 @@ public class UserManagerImpl extends UserManagerPOA {
         users.add(element);
         return true;
     }
+    public boolean record (String name, String surname, String username, String password_sha) {
+        for(UserInfo el : users) {
+            if (el.username.compareTo(username) == 0) {
+                return false;
+            }
+        }
+        UserInfo element =  new UserInfo(name, surname, username, password_sha);
+        users.add(element);
+        return true;
+    }
 
     public String login(String username, String password, String dev_id) {
         for (UserInfo el : users) {
