@@ -4,6 +4,9 @@ import org.omg.CORBA.ORB;
 import org.omg.PortableServer.*;
 import org.omg.CosNaming.*;
 import Dropboxlike.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Collections;
 import java.util.*;
 import java.io.*;
 import java.io.DataInputStream;
@@ -13,14 +16,106 @@ import java.net.UnknownHostException;
 import java.net.SocketException;
 import java.net.NetworkInterface;
 
-public class DropboxLikeClient {
+public class DropboxLikeClient implements Runnable {
     static Repository dropboxImpl;
     static String token;
     static String user_name;
     static String user_dev_id;
     static String home_env;
-    static ArrayList<SmallL> user_file_list;
-
+    static ArrayList<SmallL> user_file =  new ArrayList<SmallL>();
+    static List user_file_list = Collections.synchronizedList(user_file);
+    static boolean runn = true;
+    static Thread updater;
+    public DropboxLikeClient(){
+        updater = null;
+    }
+    public void run () {
+        String username = user_name;
+        String token_ = token;
+        run (username, token_);
+    }
+    public void run (String username, String token) {
+        while(runn) {
+            synchronized (user_file_list) {
+                SmallL[] listFromServer = null;
+                try {
+                    listFromServer = dropboxImpl.askListUser(username, token);
+                    if(listFromServer.length != 0) {
+                        SmallL[] listFromClient = (SmallL[]) user_file_list.toArray(new SmallL[user_file_list.size()]);
+                        for (SmallL el1 : listFromServer) {
+                            boolean find = false;
+                            for (SmallL el2 : listFromClient) {
+                                if(el1.name.compareTo(el2.name) == 0 && el1.md5.trim().compareTo(el2.md5.trim()) == 0) {
+                                    find = true;
+                                }
+                            }
+                            if(!find) {
+                                FileAtRepository new_file = null;
+                                FileOutputStream writer = null;
+                                try{
+                                    if(el1.name.compareTo("NULL") != 0) {
+                                        new_file = dropboxImpl.get_file(username, token, el1.name );
+                                        if (new_file.name.compareTo("NULL") != 0) {
+                                            writer = new FileOutputStream(home_env+"/"+username+"/"+new_file.name);
+                                            writer.write(new_file.cont);
+                                            writer.close();
+                                            SmallL toAdd = new SmallL(new_file.name, new_file.md5);
+                                            user_file_list.add(toAdd);
+                                            File data = new File(home_env+"/"+username+"/.data");
+                                            if(!data.exists()){
+                                                data.createNewFile();
+                                            }
+                                            FileWriter fileWri =  new FileWriter(home_env+"/"+username+"/.data");
+                                            BufferedWriter bufWri =  new BufferedWriter(fileWri);
+                                            PrintWriter out = new PrintWriter(bufWri);
+                                            out.println(new_file.name+":"+new_file.md5+":"+new_file.ownerUserName);
+                                        }
+                                    }
+                                }
+                                catch (FileNotFoundException e) {
+                                    e.printStackTrace();
+                                }
+                                catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                        for (SmallL el1 : listFromClient) {
+                            boolean find = false;
+                            for (SmallL el2 : listFromServer) {
+                                if(el1.name.compareTo(el2.name) == 0) {
+                                    find = true;
+                                }
+                            }
+                            if(!find) {
+                                File toDelete =  new File (home_env+"/"+username+"/"+el1.name);
+                                toDelete.delete();
+                                user_file_list.remove((Object)el1);
+                            }
+                        }
+                    }
+                }
+                catch (OwnerException e) {
+                    e.printStackTrace();
+                }
+                catch (TokenException e) {
+                    e.printStackTrace();
+                }
+                catch (FileDoesntExist e) {
+                    e.printStackTrace();
+                }
+            }
+            try{
+                Thread.sleep(1000);
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    public void stop() {
+        runn =  false;
+    }
     static String SHAchecksumfile(String path) {
         StringBuffer hexString = new StringBuffer();
         try{
@@ -139,7 +234,9 @@ public class DropboxLikeClient {
             while (sc.hasNextLine()) {
                 String line =  sc.nextLine();
                 String[] tmp = line.split(":");
-                user_file_list.add(new SmallL(tmp[0],tmp[1]));
+                synchronized (user_file_list) {
+                    user_file_list.add((Object) new SmallL(tmp[0],tmp[1]));
+                }
             }
         }
         catch (FileNotFoundException e) {
@@ -192,16 +289,15 @@ public class DropboxLikeClient {
                         NetworkInterface network = NetworkInterface.getByInetAddress(ip);
                         byte[] mac = network.getHardwareAddress();
                         if (mac != null) {
-                        StringBuilder sb = new StringBuilder();
-                        for (int i=0; i < mac.length; i++) {
-                            sb.append(String.format("%20X%s", mac[i], (i < mac.length -1) ? "-" : ""));
-                        }
-                        dev_id = sb.toString();
+                            StringBuilder sb = new StringBuilder();
+                            for (int i=0; i < mac.length; i++) {
+                                sb.append(String.format("%20X%s", mac[i], (i < mac.length -1) ? "-" : ""));
+                            }
+                            dev_id = sb.toString();
                         }
                         else fail = true;
                     }
                     else {
-                         System.out.println("Error while I was reading the mac address so I will try to use the hostname of your machine");
                         dev_id = InetAddress.getLocalHost().getHostName();
                         fail = false;
                     }
@@ -213,6 +309,7 @@ public class DropboxLikeClient {
                     fail = true;
                 }
             }while (fail);
+            dev_id = c.readLine("Insert your hostname: ");
             username = c.readLine("Insert your username: ");
             char[] pas = c.readPassword("Insert the password for " + username + ": ");
             password = new String(pas);
@@ -226,6 +323,8 @@ public class DropboxLikeClient {
                 user_dev_id = dev_id;
                 token = res;
                 load_list();
+                updater = new Thread(new DropboxLikeClient());
+                updater.start();
             }
         }
         else {
@@ -244,7 +343,12 @@ public class DropboxLikeClient {
             user_name = "";
             user_dev_id = "";
             token = "";
-            user_file_list = null;
+            synchronized (user_file_list) {
+                user_file =  new ArrayList<SmallL>();
+                user_file_list = Collections.synchronizedList(user_file);
+            }
+            updater.stop();
+            updater = null;
         }
     }
 
@@ -288,30 +392,32 @@ public class DropboxLikeClient {
                 entity.md5 = SHAchecksumfile(path);
                 entity.cont = fileData;
                 entity.name = element.getName();
-                for (SmallL l : user_file_list) {
-                    if (l.name.compareTo(entity.name) == 0 && l.md5.compareTo(entity.md5) == 0){
-                        System.out.println("Error: The file is already in your repository");
-                        return;
+                synchronized (user_file_list) {
+                    for (Object l : user_file_list) {
+                        if (((SmallL)l).name.compareTo(entity.name) == 0 && ((SmallL)l).md5.compareTo(entity.md5) == 0){
+                            System.out.println("Error: The file is already in your repository");
+                            return;
+                        }
                     }
+                    //Create a copy in the local repository
+                    FileOutputStream local_copy = new FileOutputStream (home_env+"/"+user_name+"/"+entity.name);
+                    local_copy.write(entity.cont);
+                    local_copy.close();
+                    //Updating of local metadata
+                    File data = new File(home_env+"/"+user_name+"/.data");
+                    if(!data.exists()) {
+                        data.createNewFile();
+                    }
+                    FileWriter fileWri = new FileWriter(home_env+"/"+user_name+"/.data", true);
+                    BufferedWriter bufWri = new BufferedWriter (fileWri);
+                    PrintWriter out = new PrintWriter(bufWri);
+                    out.println(entity.name+":"+entity.md5+":"+entity.ownerUserName);
+                    out.close();
+                    //Updating the user_list
+                    user_file_list.add(new SmallL(entity.name, entity.md5));
+                    //Send file to remote server
+                    dropboxImpl.send(entity, user_name, token);
                 }
-                //Create a copy in the local repository
-                FileOutputStream local_copy = new FileOutputStream (home_env+"/"+user_name+"/"+entity.name);
-                local_copy.write(entity.cont);
-                local_copy.close();
-                //Updating of local metadata
-                File data = new File(home_env+"/"+user_name+"/.data");
-                if(!data.exists()) {
-                    data.createNewFile();
-                }
-                FileWriter fileWri = new FileWriter(home_env+"/"+user_name+"/.data", true);
-                BufferedWriter bufWri = new BufferedWriter (fileWri);
-                PrintWriter out = new PrintWriter(bufWri);
-                out.println(entity.name+":"+entity.md5+":"+entity.ownerUserName);
-                out.close();
-                //Updating the user_list
-                user_file_list.add(new SmallL(entity.name, entity.md5));
-                //Send file to remote server
-                dropboxImpl.send(entity, user_name, token);
             }
             catch (IOException e) {
                 e.printStackTrace();
@@ -335,52 +441,54 @@ public class DropboxLikeClient {
             String filename;
             boolean correct = true;
             SmallL toDelete = null;
-            do{
-                dir();
-                filename = con.readLine("Insert the file to delete: ").trim();
-                for (SmallL element : user_file_list) {
-                    if (element.name.compareTo(filename) == 0) {
-                        correct = false;
-                        toDelete = element;
+            synchronized (user_file_list) {
+                do{
+                    dir();
+                    filename = con.readLine("Insert the file to delete: ").trim();
+                    for (Object element : user_file_list) {
+                        if (((SmallL)element).name.compareTo(filename) == 0) {
+                            correct = false;
+                            toDelete = ((SmallL)element);
+                        }
+                    }
+                    if (correct) {
+                        System.out.println("Error: the filename provided is not valid. Try again...");
+                    }
+                }while(correct);
+                try {
+                    if (dropboxImpl.delete(filename,user_name, token)) {
+                        //delete element from user_file_list
+                        user_file_list.remove(toDelete);
+                        File file_to_delete = new File(home_env+ "/" + user_name+"/"+toDelete.name);
+                        file_to_delete.delete();
+                        File temp_ = new File(home_env+"/"+user_name+"/.data");
+                        temp_.delete();
+                        temp_ = new File(home_env+"/"+user_name+"/.data");
+                        PrintWriter tempw = new PrintWriter(temp_);
+                        for ( Object el : user_file_list) {
+                            tempw.println(((SmallL)el).name+":"+((SmallL)el).md5+":"+user_name);
+                        }
+                        tempw.close();
+                    }
+                    else {
+                        System.out.println("It is not possible to remove the file now. Please try later");
                     }
                 }
-                if (correct) {
-                    System.out.println("Error: the filename provided is not valid. Try again...");
+                catch (OwnerException e) {
+                    e.printStackTrace();
                 }
-            }while(correct);
-            try {
-                if (dropboxImpl.delete(filename,user_name, token)) {
-                    //delete element from user_file_list
-                    user_file_list.remove(toDelete);
-                    File file_to_delete = new File(home_env+ "/" + user_name+"/"+toDelete.name);
-                    file_to_delete.delete();
-                    File temp_ = new File(home_env+"/"+user_name+"/.data");
-                    temp_.delete();
-                    temp_ = new File(home_env+"/"+user_name+"/.data");
-                    PrintWriter tempw = new PrintWriter(temp_);
-                    for (SmallL el : user_file_list) {
-                        tempw.println(el.name+":"+el.md5+":"+user_name);
-                    }
-                    tempw.close();
+                catch (FileDoesntExist e) {
+                    e.printStackTrace();
                 }
-                else {
-                    System.out.println("It is not possible to remove the file now. Please try later");
+                catch (TokenException e) {
+                    e.printStackTrace();
                 }
-            }
-            catch (OwnerException e) {
-                e.printStackTrace();
-            }
-            catch (FileDoesntExist e) {
-                e.printStackTrace();
-            }
-            catch (TokenException e) {
-                e.printStackTrace();
-            }
-            catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-            catch (IOException e) {
-                e.printStackTrace();
+                catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+                catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -392,13 +500,16 @@ public class DropboxLikeClient {
         else {
             int i=0;
             System.out.println("Your repository contains: ");
-            if(user_file_list != null)
-                for (SmallL l : user_file_list) {
-                    System.out.println(i+") "+ l.name);
-                    i++;
-                }
-            if(i == 0)
-                System.out.println("No file found in your repository");
+            synchronized (user_file_list) {
+                if(user_file_list != null)
+                    for (Object l : user_file_list) {
+
+                        System.out.println(i+") "+ ((SmallL)l).name);
+                        i++;
+                    }
+                if(i == 0)
+                    System.out.println("No file found in your repository");
+            }
         }
     }
 
@@ -406,7 +517,6 @@ public class DropboxLikeClient {
         token = "";
         user_name = "";
         user_dev_id = "";
-        user_file_list = new ArrayList<SmallL>();
         home_env = System.getenv("DROPBOXLIKECLIENT_HOME");
         if (home_env == null) home_env="dropboxlikeclient";
         else

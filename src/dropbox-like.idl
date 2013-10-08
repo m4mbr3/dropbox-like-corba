@@ -34,8 +34,6 @@ module Dropboxlike {
         string login(in string username, in string password, in string dev_id) raises (InvalidUser);
         boolean logout (in string username, in string device, in string token) raises (UserNoLogged);
         boolean remove (in string username, in string password) raises (NoSuchUser);
-        boolean check_username (in string username);
-
     };
     //Content is a sequence of octet that are the content of the file that has to be sent
     typedef sequence<octet> Content;
@@ -78,6 +76,6 @@ module Dropboxlike {
         boolean check_username (in string username);
         boolean isLogged(in string username, in string token);
 
+        FileAtRepository get_file(in string username, in string token, in string filename);
     };
-        
 };

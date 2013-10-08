@@ -2,6 +2,7 @@ package src;
 
 import java.util.*;
 import java.io.*;
+import java.io.DataInputStream;
 import Dropboxlike.*;
 import org.omg.CORBA.*;
 import org.omg.PortableServer.*;
@@ -91,7 +92,7 @@ public class DropboxLikeImpl extends RepositoryPOA {
                 writer.write(file.cont);
                 writer.close();
                 File w = new File (server_home+"/"+username+"/.user.info");
-                if(w.exists())
+                if(!w.exists())
                     w.createNewFile();
                 FileWriter  fileWri = new FileWriter(server_home+"/"+username+"/.user.info", true);
                 BufferedWriter  bufWri = new BufferedWriter(fileWri);
@@ -110,6 +111,13 @@ public class DropboxLikeImpl extends RepositoryPOA {
     public SmallL[] askListUser (String username, String token) {
         ArrayList<SmallL> list = new ArrayList<SmallL>();
         File userlist = new File(server_home+"/"+username+"/.user.info");
+        try{
+            if(!userlist.exists())
+                userlist.createNewFile();
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
         Scanner sc=null;
         try {
             sc = new Scanner(userlist);
@@ -122,7 +130,13 @@ public class DropboxLikeImpl extends RepositoryPOA {
             String[] tmp = line.split(":");
             list.add(new SmallL(tmp[0],tmp[1]));
         }
-        SmallL[] smallL = list.toArray(new SmallL[list.size()]);
+        SmallL[] smallL;
+        if (list.size() != 0)
+            smallL = list.toArray(new SmallL[list.size()]);
+        else {
+            smallL = new SmallL[1];
+            smallL[0] = new SmallL("NULL","NULL");
+        }
         return smallL;
     }
 
@@ -132,7 +146,7 @@ public class DropboxLikeImpl extends RepositoryPOA {
                 user_dir.mkdir();
                 File w = new File (server_home+"/users_list.txt");
                 try{
-                    if(w.exists())
+                    if(!w.exists())
                         w.createNewFile();
                 }
                 catch (IOException e) {
@@ -209,7 +223,38 @@ public class DropboxLikeImpl extends RepositoryPOA {
             return false;
         }
     }
+    public FileAtRepository get_file(String username, String token, String filename) {
+        FileAtRepository toReturn = new FileAtRepository();
+        toReturn.name = "NULL";
+        toReturn.md5 = "NULL";
+        toReturn.ownerUserName = "NULL";
 
+        if (um.isLogged(username, token)) {
+            for (FileAtRepository e : repository) {
+                if (e.name.compareTo(filename) == 0) {
+                    try {
+                        File toRead = new File (server_home+"/"+username+"/"+filename);
+                        byte[] fileData = new byte[(int) toRead.length()];
+                        DataInputStream  dis = new DataInputStream(new FileInputStream(toRead));
+                        dis.readFully(fileData);
+                        dis.close();
+                        toReturn.name = e.name;
+                        toReturn.md5 = e.md5;
+                        toReturn.ownerUserName = e.ownerUserName;
+                        toReturn.cont = fileData;
+                    }
+                    catch (IOException el) {
+                        el.printStackTrace();
+                    }
+                    return toReturn;
+                }
+            }
+            return toReturn;
+        }
+        else {
+            return toReturn;
+        }
+    }
     public boolean delete (String filename, String username, String token) {
         for (FileAtRepository f : repository) {
             if (f.ownerUserName.equals(username) && f.name.equals(filename)) {
@@ -245,6 +290,13 @@ public class DropboxLikeImpl extends RepositoryPOA {
     public void bootstrap (){
         ArrayList<UserInfo> users = new ArrayList<UserInfo>();
         File users_file = new File(server_home+"/users_list.txt");
+        try {
+            if (!users_file.exists())
+                users_file.createNewFile();
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
         Scanner sc = null;
         try {
             sc = new Scanner(users_file);
@@ -267,7 +319,6 @@ public class DropboxLikeImpl extends RepositoryPOA {
     }
     public void shutdown() {
             orb.shutdown(false);
-
-            }
+    }
 }
 
