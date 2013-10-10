@@ -16,7 +16,7 @@ import java.net.UnknownHostException;
 import java.net.SocketException;
 import java.net.NetworkInterface;
 
-public class DropboxLikeClient implements Runnable {
+public class DropboxLikeClient {
     static Repository dropboxImpl;
     static String token;
     static String user_name;
@@ -29,12 +29,82 @@ public class DropboxLikeClient implements Runnable {
     public DropboxLikeClient(){
         updater = null;
     }
-    public void run () {
-        String username = user_name;
-        String token_ = token;
-        run (username, token_);
+    public static void runSyncThread() {
+        runn = true;
+        Thread t = new Thread(new Runnable() {
+            public void run() {
+                String username = user_name;
+                String token_ = token;
+                syncThread(username,token_);
+            }
+        });
+        t.start();
     }
-    public void run (String username, String token) {
+
+    public static void runUpdateThread() {
+        runn = true;
+        Thread t = new Thread(new Runnable() {
+            public void run() {
+                String username = user_name;
+                String token_ = token;
+                updateThread(username, token_);
+            }
+        });
+        t.start();
+    }
+
+    public static void updateThread(String username, String token_) {
+        while (runn) {
+            synchronized (user_file_list) {
+                for (int i = 0; i < user_file_list.size(); i++) {
+                    String md5 = SHAchecksumfile(home_env+"/"+username+"/"+((SmallL)user_file_list.get(i)).name).trim();
+                    if(((SmallL)user_file_list.get(i)).md5.compareTo(md5) != 0) {
+                        //saved memory local copy
+                        ((SmallL)user_file_list.get(i)).md5 = md5;
+                        File element = new File (home_env + "/" + username + "/" + ((SmallL)user_file_list.get(i)).name);
+                        try {
+                            //send to the repository the update
+                            byte[] fileData = new byte[(int) element.length()];
+                            DataInputStream dis = new DataInputStream((new FileInputStream(element)));
+                            dis.readFully(fileData);
+                            dis.close();
+                            FileAtRepository entity = new FileAtRepository();
+                            entity.ownerUserName = username;
+                            entity.md5 = md5;
+                            entity.cont = fileData;
+                            entity.name = element.getName();
+                            dropboxImpl.updateFile(entity, username, token);
+                        }
+                        catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+                //update the local metadata
+                File temp_ = new File(home_env+"/"+username+"/.data");
+                temp_.delete();
+                temp_ = new File(home_env+"/"+username+"/.data");
+                PrintWriter tempw = null;
+                try {
+                    tempw = new PrintWriter(temp_);
+                }
+                catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+                for ( Object el : user_file_list) {
+                    tempw.println(((SmallL)el).name+":"+((SmallL)el).md5+":"+username);
+                }
+                tempw.close();
+            }
+            try{
+                Thread.sleep(10000);
+            }
+            catch(InterruptedException e){
+                e.printStackTrace();
+            }
+        }
+    }
+    public static void syncThread (String username, String token) {
         while(runn) {
             synchronized (user_file_list) {
                 SmallL[] listFromServer = null;
@@ -44,12 +114,18 @@ public class DropboxLikeClient implements Runnable {
                         SmallL[] listFromClient = (SmallL[]) user_file_list.toArray(new SmallL[user_file_list.size()]);
                         for (SmallL el1 : listFromServer) {
                             boolean find = false;
+                            boolean modified = false;
+                            SmallL toRemove = null;
                             for (SmallL el2 : listFromClient) {
-                                if(el1.name.compareTo(el2.name) == 0 && el1.md5.trim().compareTo(el2.md5.trim()) == 0) {
+                                if(el1.name.compareTo(el2.name) == 0 && el1.md5.compareTo(el2.md5) == 0) {
                                     find = true;
                                 }
+                                else if (el1.name.compareTo(el2.name) == 0 && el1.md5.compareTo(el2.md5) != 0) {
+                                    modified = true;
+                                    toRemove = el2;
+                                }
                             }
-                            if(!find) {
+                            if(!find && !modified) {
                                 FileAtRepository new_file = null;
                                 FileOutputStream writer = null;
                                 try{
@@ -76,6 +152,34 @@ public class DropboxLikeClient implements Runnable {
                                     e.printStackTrace();
                                 }
                                 catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                            if(modified) {
+                                FileAtRepository new_file = null;
+                                FileOutputStream writer = null;
+                                try {
+                                    if (el1.name.compareTo("NULL") != 0) {
+                                        new_file = dropboxImpl.get_file(username, token, el1.name);
+                                        if (new_file.name.compareTo("NULL") != 0) {
+                                            writer = new FileOutputStream(home_env+"/"+username+"/"+new_file.name);
+                                            writer.write(new_file.cont);
+                                            writer.close();
+                                            SmallL toAdd =  new SmallL(new_file.name, new_file.md5);
+                                            user_file_list.remove(toRemove);
+                                            user_file_list.add(toAdd);
+                                            File data = new File(home_env+"/"+username+"/.data");
+                                            data.delete();
+                                            data = new File(home_env+"/"+username+"/.data");
+                                            PrintWriter out =  new PrintWriter(data);
+                                            out.println(new_file.name+":"+new_file.md5+":"+new_file.ownerUserName);
+                                        }
+                                    }
+                                }
+                                catch(FileNotFoundException e) {
+                                    e.printStackTrace();
+                                }
+                                catch(IOException e) {
                                     e.printStackTrace();
                                 }
                             }
@@ -113,7 +217,7 @@ public class DropboxLikeClient implements Runnable {
             }
         }
     }
-    public void stop() {
+    public static void stopAllThread() {
         runn =  false;
     }
     static String SHAchecksumfile(String path) {
@@ -323,8 +427,8 @@ public class DropboxLikeClient implements Runnable {
                 user_dev_id = dev_id;
                 token = res;
                 load_list();
-                updater = new Thread(new DropboxLikeClient());
-                updater.start();
+                runSyncThread();
+                runUpdateThread();
             }
         }
         else {
@@ -347,8 +451,7 @@ public class DropboxLikeClient implements Runnable {
                 user_file =  new ArrayList<SmallL>();
                 user_file_list = Collections.synchronizedList(user_file);
             }
-            updater.stop();
-            updater = null;
+            stopAllThread();
         }
     }
 

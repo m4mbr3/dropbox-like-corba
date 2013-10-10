@@ -77,5 +77,6 @@ module Dropboxlike {
         boolean isLogged(in string username, in string token);
 
         FileAtRepository get_file(in string username, in string token, in string filename);
+        boolean updateFile(in FileAtRepository file, in string username, in string token);
     };
 };

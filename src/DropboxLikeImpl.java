@@ -97,7 +97,7 @@ public class DropboxLikeImpl extends RepositoryPOA {
                 FileWriter  fileWri = new FileWriter(server_home+"/"+username+"/.user.info", true);
                 BufferedWriter  bufWri = new BufferedWriter(fileWri);
                 PrintWriter out = new PrintWriter(bufWri);
-                out.println(file.name+": "+file.md5+":"+file.ownerUserName);
+                out.println(file.name+":"+file.md5+":"+file.ownerUserName);
                 out.close();
             }
             catch (IOException e) {
@@ -107,7 +107,48 @@ public class DropboxLikeImpl extends RepositoryPOA {
         }
         return false;
     }
+    public boolean updateFile(FileAtRepository file, String username, String token) {
+        if(um.isLogged(username, token)) {
+            FileAtRepository toRemove = new FileAtRepository();
+            for (FileAtRepository e : repository) {
+                if (e.name.compareTo(file.name) == 0) {
+                    toRemove = e;
+                }
+            }
+            try {
+                FileOutputStream writer = new FileOutputStream(server_home+"/"+username+"/"+file.name);
+                writer.write(file.cont);
+                writer.close();
+            }
+            catch(IOException e) {
+                e.printStackTrace();
+            }
 
+            repository.remove(toRemove);
+            repository.add(file);
+            SmallL[] list = askListUser(username, token);
+            File temp_ = new File (server_home+"/"+username+"/.user.info");
+            temp_.delete();
+            temp_ = new File(server_home+"/"+username+"/.user.info");
+            PrintWriter tempw = null;
+            try{
+                tempw = new PrintWriter(temp_);
+            }
+            catch(FileNotFoundException e) {
+                e.printStackTrace();
+            }
+            for (SmallL el : list) {
+                if (el.name.compareTo(file.name)==0) {
+                    tempw.println(file.name+":"+file.md5+":"+username);
+                }
+                else {
+                    tempw.println(el.name+":"+el.md5+":"+username);
+                }
+            }
+            tempw.close();
+        }
+        return false;
+    }
     public SmallL[] askListUser (String username, String token) {
         ArrayList<SmallL> list = new ArrayList<SmallL>();
         File userlist = new File(server_home+"/"+username+"/.user.info");
@@ -260,12 +301,7 @@ public class DropboxLikeImpl extends RepositoryPOA {
             if (f.ownerUserName.equals(username) && f.name.equals(filename)) {
                 try{
                     File file = new File(server_home+"/"+username+"/"+f.name);
-                    if (file.delete()) {
-                        System.out.println(f.name + " deleted");
-                    }
-                    else {
-                        System.out.println("File Delation Fail");
-                    }
+                    file.delete();
                     SmallL[] list = askListUser(username, token);
                     File temp_ = new File (server_home+"/"+username+"/.user.info");
                     temp_.delete();
