@@ -1,0 +1,3 @@
+[submodule "src/client-erlang"]
+	path = src/client-erlang
+	url = git@github.com:m4mbr3/dropbox-like-client-erlang.git
