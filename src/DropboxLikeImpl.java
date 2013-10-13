@@ -230,10 +230,9 @@ public class DropboxLikeImpl extends RepositoryPOA {
             File user_dir = new File(server_home+"/"+username);
             try {
                 delete(user_dir);
-                return true;
             }
             catch (IOException e) {
-                e.printStackTrace();
+                return false;
             }
             File users_file = new File(server_home+"/users_list.txt");
             Scanner sc = null;
@@ -241,29 +240,27 @@ public class DropboxLikeImpl extends RepositoryPOA {
                 sc = new Scanner(users_file);
             }
             catch (FileNotFoundException e) {
-                e.printStackTrace();
+                return false;
             }
             while (sc.hasNext()) {
                 String line = sc.nextLine();
-                System.out.println(line);
                 String[] lines=  line.split(":");
                 users.add(new UserInfo(lines[0],lines[1],lines[2], lines[3]));
             }
             users_file.delete();
-            FileWriter users_files = null;
-            try {
-                users_files = new FileWriter(server_home+"/users_list.txt",true);
+            users_file = new File(server_home+"/users_list.txt");
+            PrintWriter tempw = null;
+            try{
+                tempw =  new PrintWriter(users_file);
+            }catch(FileNotFoundException e) {
+                return false;
             }
-            catch (IOException e) {
-                e.printStackTrace();
-            }
-            PrintWriter tempw =  new PrintWriter(users_files);
             for(UserInfo el : users) {
-                tempw.println(el.name+":"+el.surname+":"+el.username+":"+el.password);
+                if (el.username.compareTo(username) != 0)
+                    tempw.println(el.name+":"+el.surname+":"+el.username+":"+el.password);
             }
             tempw.close();
-
-            return false;
+            return true;
         }
         else {
             return false;
