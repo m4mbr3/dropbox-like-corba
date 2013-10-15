@@ -669,7 +669,7 @@ public class DropboxLikeClient {
                     System.out.flush();
                 }
                 else if (c.compareTo("exit") != 0) {
-                    System.out.println("dropboxlike:"+ c + ":command not found");
+                    System.out.println("dropboxlike: "+ c + ": command not found");
                 }
             }
             if (dropboxImpl.isLogged(user_name, token)) {
