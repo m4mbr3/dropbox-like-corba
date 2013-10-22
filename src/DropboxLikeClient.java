@@ -632,7 +632,11 @@ public class DropboxLikeClient {
             NamingContextExt ncRef = NamingContextExtHelper.narrow(objRef);
             String name = "DBServer";
             dropboxImpl = RepositoryHelper.narrow(ncRef.resolve_str(name));
-            Console con = System.console();
+            Console con;
+            do {
+                con = System.console();
+            }while(con == null);
+            if (con == null) System.out.println("WTF");
             String c="";
             menu ();
             while (c.compareTo("exit") != 0) {

@@ -271,7 +271,7 @@ public class DropboxLikeImpl extends RepositoryPOA {
         toReturn.name = "NULL";
         toReturn.md5 = "NULL";
         toReturn.ownerUserName = "NULL";
-
+        toReturn.cont = new byte[]{(byte) 0x01};
         if (um.isLogged(username, token)) {
             synchronized(repository) {
                 for (Object e : repository) {
@@ -330,6 +330,8 @@ public class DropboxLikeImpl extends RepositoryPOA {
     }
 
     public void bootstrap (){
+        File directory = new File(server_home);
+        directory.mkdir();
         ArrayList<UserInfo> users = new ArrayList<UserInfo>();
         File users_file = new File(server_home+"/users_list.txt");
         try {
