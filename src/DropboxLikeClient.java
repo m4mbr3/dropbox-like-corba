@@ -252,7 +252,7 @@ public class DropboxLikeClient {
         System.out.flush();
 
         System.out.println ("/*************************  DropboxLike   ***************************/");
-        System.out.println ("/***********  Author : Andrea Mambretti   Version 1.0   *************/ ");
+        System.out.println ("/***********  Author : Andrea Mambretti   Version 1.1   *************/ ");
         System.out.println ("/********************************************************************/ ");
         System.out.println ("Select an operation:");
         System.out.println ("");
@@ -632,11 +632,7 @@ public class DropboxLikeClient {
             NamingContextExt ncRef = NamingContextExtHelper.narrow(objRef);
             String name = "DBServer";
             dropboxImpl = RepositoryHelper.narrow(ncRef.resolve_str(name));
-            Console con;
-            do {
-                con = System.console();
-            }while(con == null);
-            if (con == null) System.out.println("WTF");
+            Console con = System.console();
             String c="";
             menu ();
             while (c.compareTo("exit") != 0) {
