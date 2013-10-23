@@ -134,7 +134,6 @@ public class DropboxLikeImpl extends RepositoryPOA {
             SmallL[] list = askListUser(username, token);
             File temp_ = new File (server_home+"/"+username+"/.user.info");
             temp_.delete();
-            temp_ = new File(server_home+"/"+username+"/.user.info");
             PrintWriter tempw = null;
             try{
                 tempw = new PrintWriter(temp_);
@@ -154,7 +153,7 @@ public class DropboxLikeImpl extends RepositoryPOA {
         }
         return false;
     }
-    public SmallL[] askListUser (String username, String token) {
+    public synchronized SmallL[] askListUser (String username, String token) {
         ArrayList<SmallL> list = new ArrayList<SmallL>();
         File userlist = new File(server_home+"/"+username+"/.user.info");
         try{
@@ -186,7 +185,7 @@ public class DropboxLikeImpl extends RepositoryPOA {
         return smallL;
     }
 
-    public boolean subscribe(String name,String surname, String username, String password) {
+    public synchronized boolean subscribe(String name,String surname, String username, String password) {
             if(um.subscribe(name, surname, username, password)) {
                 File user_dir = new File(server_home+"/"+username);
                 user_dir.mkdir();
