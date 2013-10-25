@@ -1,3 +1,5 @@
 #!/bin/bash 
 
 export  DROPBOXLIKE_HOME=$HOME
+export  DROPBOXLIKECLIENT=$HOME
+export  DROPBOXLIKESERVERIP="localhost"
