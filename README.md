@@ -83,5 +83,5 @@ To run the dropboxlike client written in erlang you have to recover from the ser
 `git submodule init`
 `git submodule update`
 
-You will finally find the client code at the path `src/client-erlang/`
+You will finally find the client code at the path `src/client-erlang/`  
 To have it ready to use please follow the [instruction](https://github.com/m4mbr3/dropbox-like-client-erlang).
