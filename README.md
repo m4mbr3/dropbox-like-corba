@@ -29,7 +29,7 @@ How Install it?
     `git clone https://github.com/m4mbr3/dropbox-like-corba.git`
 wherever you want on the filesystem (to decide the name of the folder add at the end of the command above your preference).
 6. Open the `src/Makefile` and change the classpath of the command to point to the exact sources directory of corba.  
-####For Example:
+For Example:
     If the main jacorb directory is  `/home/myuser/jacorb_*_*/`  
     You have to change the -classpath into `/home/myuser/jacorb_*_*/src/omg-*-*-*/` for all the command into the Makefile.
 7. Now run it using the command `make` inside the `src` folder
@@ -39,12 +39,13 @@ Configuration
 To configure the dropboxlike application you have to edit the config.sh file  
 
 1. `DROPBOXLIKE_HOME` is the environment variable of the parent directory where the files of the server will be stored  
-For instance: you can modify it to point to your home directory using `$HOME` or specify something like `/my/folder` where you have to be able to write
+For instance: you can modify it to point to your home directory using `$HOME` or specify something like `/my/folder` where you have to be able to write  
 The program automagically appends to that path the name `dropboxlike` which will be the main directory of the server.
 2. `DROPBOXLIKECLIENT_HOME` referes to the location where all the client information will be stored  
-For instance: you can modify it to point to your home directory using `$HOME` or specify something like `/my/folder` where you have to be able to write
+For instance: you can modify it to point to your home directory using `$HOME` or specify something like `/my/folder` where you have to be able to write  
 The program automagically appends to that path the name `dropboxlikeclient` which will be the main directory of the client.
-3. `DROPBOXLIKESERVERIP` is used by the erlang client only. If it is not setted will be used localhost instead. For the java client doesn't care.
+3. `DROPBOXLIKESERVERIP` is used by the erlang client only.  
+If it is not setted will be used localhost instead. For the java client doesn't care.
 
 and then run, from the directory `src` the command  
 `./config.sh`
