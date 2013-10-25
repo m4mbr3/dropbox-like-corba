@@ -11,14 +11,14 @@ at https://github.com/m4mbr3/dropbox-like-client-erlang
 
 How Install it?
 ---------------------------
-Requirements:
+###Requirements:
 
 1. [java] (https://www.java.com/it/download/)
 2. [javac] (http://www.oracle.com/technetwork/java/javase/downloads/index.html)
 3. [jacORB with sources] (http://www.jacorb.org/download.html)
 4. [git] (http://git-scm.com/)
 
-Steps:
+###Steps:
 
 1. Install java and javac for your OS.
 2. Download and extract jacORB archive where you want into the filesystem.
@@ -28,7 +28,7 @@ Steps:
 5. Clone the repository using
     `git clone https://github.com/m4mbr3/dropbox-like-corba.git`
 wherever you want on the filesystem (to decide the name of the folder add at the end of the command above your preference).
-6. Open the `src/Makefile` and change the classpath of the command to point to the exact sources directory of corba.
-For Example:
-If the main jacorb directory is  `/home/myuser/jacorb_*_*/`
-You have to change the -classpath into `/home/myuser/jacorb_*_*/src/omg-*-*-*/` for all the command into the Makefile
+6. Open the `src/Makefile` and change the classpath of the command to point to the exact sources directory of corba.  
+For Example:  
+If the main jacorb directory is  `/home/myuser/jacorb_*_*/`  
+You have to change the -classpath into `/home/myuser/jacorb_*_*/src/omg-*-*-*/` for all the command into the Makefile.
