@@ -20,12 +20,15 @@ Requirements:
 
 Steps:
 
-1. Install java and javac for your OS
-2. Download and extract jacORB archive where you want into the filesystem
+1. Install java and javac for your OS.
+2. Download and extract jacORB archive where you want into the filesystem.
 3. Include the bin directory inside the jacORB extracted folder in your PATH
     `export PATH=$PATH:/path/to/your/jacorb/bin/folder`
 4. Install git on your system following the instruction on the website
 5. Clone the repository using
     `git clone https://github.com/m4mbr3/dropbox-like-corba.git`
 wherever you want on the filesystem (to decide the name of the folder add at the end of the command above your preference).
-
+6. Open the `src/Makefile` and change the classpath of the command to point to the exact sources directory of corba.
+For Example:
+If the main jacorb directory is  `/home/myuser/jacorb_*_*/`
+You have to change the -classpath into `/home/myuser/jacorb_*_*/src/omg-*-*-*/` for all the command into the Makefile
