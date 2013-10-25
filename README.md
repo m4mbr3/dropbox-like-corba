@@ -29,7 +29,7 @@ How Install it?
     `git clone https://github.com/m4mbr3/dropbox-like-corba.git`
 wherever you want on the filesystem (to decide the name of the folder add at the end of the command above your preference).
 6. Open the `src/Makefile` and change the classpath of the command to point to the exact sources directory of corba.  
-######For Example:  
+####For Example:
     If the main jacorb directory is  `/home/myuser/jacorb_*_*/`  
     You have to change the -classpath into `/home/myuser/jacorb_*_*/src/omg-*-*-*/` for all the command into the Makefile.
 7. Now run it using the command `make` inside the `src` folder
@@ -74,3 +74,14 @@ To run the dropboxlike client from the same folder above run the command :
 
 NB: This program is supposed to work in a real distributed environment so your server may be running on a different machine.  
 If it is the case please modify the localhost with the right address.
+
+
+### Run the erlang client
+
+To run the dropboxlike client written in erlang you have to recover from the server using the following commands:  
+
+`git submodule init`
+`git submodule update`
+
+You will finally find the client code at the path `src/client-erlang/`
+To have it ready to use please follow the [instruction](https://github.com/m4mbr3/dropbox-like-client-erlang).
