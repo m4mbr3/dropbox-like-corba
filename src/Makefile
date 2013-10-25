@@ -7,7 +7,10 @@ all :
 idl :
 	idl dropbox-like.idl
 
-java:
+java :
 	mkdir -p build/src
 	javac -classpath ~/programs/jacorb_3_2/src/omg-03-01-02/ Dropboxlike/*.java -d build/src/
 	javac -classpath ~/programs/jacorb_3_2/src/omg-03-01-02/ -classpath build/src/ -d build/src/ *.java
+
+clean :
+	rm -rf build
