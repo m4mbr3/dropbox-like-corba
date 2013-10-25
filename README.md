@@ -60,8 +60,8 @@ To run the orbd deamon you have to launch the command
 ### Run the server
 
 To run the dropboxlike server move from `src` directory  into the `build/src` subdir  
-    `user@path/to/project/src/ $ cd build/src`  
-    `user@path/to/project/src/build/src/ $`  
+`user@path/to/project/src/ $ cd build/src`  
+`user@path/to/project/src/build/src/ $`  
 
 then launch the command  
     `java src.DropboxLikeServer -ORBInitialPort 1050  -ORBInitialHost localhost &`
@@ -70,7 +70,7 @@ then launch the command
 
 To run the dropboxlike client from the same folder above run the command :
 
-    `java src.DropboxLikeClient -ORBInitialPort 1050  -ORBInitialHost localhost`
+`java src.DropboxLikeClient -ORBInitialPort 1050  -ORBInitialHost localhost`
 
 NB: This program is supposed to work in a real distributed environment so your server may be running on a different machine.  
-If it is the case please modify the localhost with right address.
+If it is the case please modify the localhost with the right address.
