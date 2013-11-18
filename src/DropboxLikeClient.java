@@ -173,6 +173,7 @@ public class DropboxLikeClient {
                                             data = new File(home_env+"/"+username+"/.data");
                                             PrintWriter out =  new PrintWriter(data);
                                             out.println(new_file.name+":"+new_file.md5+":"+new_file.ownerUserName);
+                                            out.close();
                                         }
                                     }
                                 }

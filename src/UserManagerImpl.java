@@ -6,7 +6,7 @@ import java.lang.Object;
 import Dropboxlike.*;
 import java.security.MessageDigest;
 
-public class UserManagerImpl extends UserManagerPOA {
+public class UserManagerImpl {
     ArrayList<Logged> logged_u= new ArrayList<Logged>();
     List logged_user = Collections.synchronizedList(logged_u);
     ArrayList<UserInfo> users;
